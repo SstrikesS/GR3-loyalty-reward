@@ -27,6 +27,7 @@
     "@shopify/app-bridge-types": "^0.0.2",
     "@shopify/cli": "3.48.3",
     "@shopify/polaris": "^11.1.2",
+    "@shopify/shopify-api": "^7.7.0",
     "@shopify/shopify-app-remix": "^1.0.3",
     "@shopify/shopify-app-session-storage-prisma": "^1.0.0",
     "axios": "^1.4.0",
@@ -40,6 +41,7 @@
     "jsonwebtoken": "^9.0.1",
     "lodash": "^4.17.21",
     "mongoose": "^7.4.3",
+    "postgres": "^3.4.3",
     "prisma": "^4.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -58,5 +60,5 @@
     "web/frontend",
     "extensions/*"
   ],
-  "author": "sonnguyenhong"
+  "author": "sstrikess"
 }

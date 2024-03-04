@@ -1,13 +1,12 @@
 import bcrypt from "bcryptjs";
-import AdminService from "./admin.server";
+import AdminServer from "./admin.server";
 import { getInfoData } from "~/utils";
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { COOKIE_NAME } from "~/constants/string.constant";
-import AdminServer from "./admin.server";
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
-if(!SECRET_KEY) {
+if (!SECRET_KEY) {
     throw new Error("SESSION_SECRET is not set");
 }
 
@@ -36,7 +35,7 @@ export const createUserSession = async (userId, redirectTo) => {
 export const requireUserId = async (request, redirectTo) => {
     const session = await getUserSession(request);
     const userId = session.get("userId");
-    if(!userId) {
+    if (!userId) {
         const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
         throw redirect(`/?${searchParams}`);
     }
@@ -45,12 +44,12 @@ export const requireUserId = async (request, redirectTo) => {
 
 const getUserSession = (request) => {
     return storage.getSession(request.headers.get("Cookie"));
-} 
+}
 
 async function getUserId(request) {
     const session = await getUserSession(request);
     const userId = session.get('userId');
-    if(!userId || typeof userId !== "string") {
+    if (!userId || typeof userId !== "string") {
         return null;
     }
     return userId;
@@ -58,14 +57,14 @@ async function getUserId(request) {
 
 export async function getUser(request) {
     const userId = await getUserId(request);
-    if(typeof userId !== "string") {
+    if (typeof userId !== "string") {
         return null;
     }
 
     try {
         const admin = await AdminServer.getAdmin({ filter: { _id: userId } });
-        if(admin) {
-            return getInfoData({ fields: [ 'username', 'email' ], object: admin })
+        if (admin) {
+            return getInfoData({ fields: ['username', 'email'], object: admin })
         } else {
             return logout(request);
         }
@@ -87,46 +86,50 @@ class AuthServer {
     static async signup(payload) {
         try {
             const { username, password, confirmedPassword, email } = payload;
-            if(password !== confirmedPassword) {
+            if (password !== confirmedPassword) {
                 return {
                     error: 'Password and confirmedPassword must be matched'
                 }
             }
-    
+
             const hashedPassword = await bcrypt.hash(password, 10);
-    
-            const existedAdmin = await AdminService.getAdmin({ filter: {
-                username: username
-            } });
-    
-            if(existedAdmin) {
+
+            const existedAdmin = await AdminServer.getAdmin({
+                filter: {
+                    username: username
+                }
+            });
+
+            if (existedAdmin) {
                 return {
                     error: 'Username is existed'
                 }
             }
-    
-            const newAdmin = await AdminService.createAdmin({ username, password: hashedPassword, email });
-            return getInfoData({ fields: [ 'username', 'email' ], object: newAdmin });
+
+            const newAdmin = await AdminServer.createAdmin({ username, password: hashedPassword, email });
+            return getInfoData({ fields: ['username', 'email'], object: newAdmin });
         } catch {
             return {
-                error: 'Error when sign up in auth server' 
+                error: 'Error when sign up in auth server'
             }
         }
     }
 
     static async login({ username, password }) {
-        const existedAdmin = await AdminService.getAdmin({ filter: {
-            username: username,
-        } });
+        const existedAdmin = await AdminServer.getAdmin({
+            filter: {
+                username: username,
+            }
+        });
 
-        if(!existedAdmin) {
+        if (!existedAdmin) {
             return {
                 error: 'Username is not existed'
             };
         }
 
         const isCorrectPassword = await bcrypt.compare(password, existedAdmin.password);
-        if(!isCorrectPassword) {
+        if (!isCorrectPassword) {
             return {
                 error: 'Password is incorrect'
             };

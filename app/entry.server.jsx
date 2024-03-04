@@ -1,23 +1,23 @@
 import { PassThrough } from "stream";
 import { renderToPipeableStream } from "react-dom/server";
-import { Response } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import isbot from "isbot";
-
+import {
+  createReadableStreamFromReadable,
+} from "@remix-run/node";
+import { isbot } from "isbot";
 import { addDocumentResponseHeaders } from "./shopify.server";
 
-const ABORT_DELAY = 5_000;
+const ABORT_DELAY = 5000;
 
 export default async function handleRequest(
   request,
   responseStatusCode,
   responseHeaders,
-  remixContext,
-  _loadContext
+  remixContext
 ) {
   addDocumentResponseHeaders(request, responseHeaders);
-
-  const callbackName = isbot(request.headers.get("user-agent"))
+  const userAgent = request.headers.get("user-agent");
+  const callbackName = isbot(userAgent ?? '')
     ? "onAllReady"
     : "onShellReady";
 
@@ -31,16 +31,15 @@ export default async function handleRequest(
       {
         [callbackName]: () => {
           const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set("Content-Type", "text/html");
-
           resolve(
-            new Response(body, {
+            new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             })
           );
-
           pipe(body);
         },
         onShellError(error) {
