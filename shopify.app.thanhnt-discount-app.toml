@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "thanhnt-discount-app"
+client_id = "c0237746d5feff0054b309baee1f1f36"
+application_url = "https://transform-formation-express-sharp.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = ""
+
+[auth]
+redirect_urls = [
+  "https://transform-formation-express-sharp.trycloudflare.com/auth/callback",
+  "https://transform-formation-express-sharp.trycloudflare.com/auth/shopify/callback",
+  "https://transform-formation-express-sharp.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "sstrikess-test-discount-app.myshopify.com"

@@ -8,19 +8,11 @@ import {
 } from "@remix-run/react";
 import {
   Page,
-  Layout,
-  Text,
   VerticalStack,
   Card,
   Button,
-  HorizontalStack,
-  Box,
-  Divider,
-  List,
-  Link,
   Form,
   FormLayout,
-  Checkbox,
   TextField,
 } from "@shopify/polaris";
 
