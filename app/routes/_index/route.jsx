@@ -1,9 +1,8 @@
-import { json, redirect } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
+import {redirect } from "@remix-run/node";
+import {useNavigate } from "@remix-run/react";
 
 import indexStyles from "./style.css";
 import {
-  AppProvider as PolarisAppProvider,
   Button, 
   Page, 
   FormLayout,
@@ -13,8 +12,6 @@ import {
 } from "@shopify/polaris";
 import CustomPolarisAppProvider from "~/components/CustomPolarisAppProvider";
 import { useState } from "react";
-import AuthServer, { getUser } from "~/server/auth.server";
-import { helloWorld, login } from "~/graphql/client";
 import { useMutation } from "@apollo/client";
 import { LOGIN_MUTATION } from "~/graphql/mutation";
 
