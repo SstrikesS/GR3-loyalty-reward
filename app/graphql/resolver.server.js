@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 import StoreModel from '~/models/store.model';
+import EarnPointModel from "~/models/earnPoint.model";
+
 export const verifyToken = async (bearerToken) => {
     if (!bearerToken) {
         throw new Error('You have to provide bearer token on the request headers');
@@ -18,9 +20,13 @@ export const resolver = {
     hello: () => {
         return "Hello World";
     },
-    getStoreByID: async ({ input }, request) => {
-        const store = await StoreModel.findONe({ _id: input.id, accessToken: input.accessToken });
-
-        return store;
+    getStoreByID: async ({input}, request) => {
+        return StoreModel.findOne({_id: input.id, accessToken: input.accessToken});
+    },
+    getEarnPoint: async ({input}, request) => {
+        return EarnPointModel.findOne({id: input.id});
+    },
+    getEarnPoints: async (request) => {
+        return EarnPointModel.find();
     }
 }

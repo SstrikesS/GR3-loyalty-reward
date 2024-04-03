@@ -4,12 +4,7 @@ import {
     useLoaderData,
 } from "@remix-run/react";
 import {
-    Form,
-    FormLayout,
-    TextField,
-    Page,
-    VerticalStack,
-    Card,
+    Card, InlineGrid,
 } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
@@ -31,6 +26,18 @@ export const loader = async ({ request }) => {
     return json({ shop: store });
 };
 
+const Placeholder = ({height = 'auto', width = 'auto'}) => {
+    return (
+        <div
+            style={{
+                display: 'inherit',
+                background: 'var(--p-color-text-info)',
+                height: height ?? undefined,
+                width: width ?? undefined,
+            }}
+        />
+    );
+};
 export default function Index() {
     const { shop } = useLoaderData();
 
@@ -40,140 +47,12 @@ export default function Index() {
 
 
     return (
-        <Page title="Store information">
-            <VerticalStack gap="5">
-                <Card>
-                    <Form>
-                        <FormLayout>
-                            <TextField
-                                label="Shop id"
-                                value={shop.id}
-                                type="password"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop name"
-                                value={shop.name}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop email"
-                                value={shop.email}
-                                type="email"
-                                autoComplete="email"
-                            />
-
-                            <TextField
-                                label="Shop domain"
-                                value={shop.domain}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop scope"
-                                value={shop.domain}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop country"
-                                value={shop.domain}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop customer email"
-                                value={shop.domain}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop my shopify domain"
-                                value={shop.myshopify_domain}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop plan name"
-                                value={shop.plan_name}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop plan display name"
-                                value={shop.plan_display_name}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop shop owner"
-                                value={shop.shop_owner}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop iana timezone"
-                                value={shop.iana_timezone}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop currency"
-                                value={shop.currency}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop address1"
-                                value={shop.address1}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop address2"
-                                value={shop.address2}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop phone"
-                                value={shop.phone}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop created at"
-                                value={shop.created_at}
-                                type="text"
-                                autoComplete="text"
-                            />
-
-                            <TextField
-                                label="Shop access token"
-                                value={shop.accessToken}
-                                type="text"
-                                autoComplete="text"
-                            />
-                        </FormLayout>
-                    </Form>
-                </Card>
-            </VerticalStack>
-        </Page>
+        <Card>
+            <InlineGrid gap="400" columns={3}>
+                <Placeholder height="320px" />
+                <Placeholder height="320px" />
+                <Placeholder height="320px" />
+            </InlineGrid>
+        </Card>
     );
 }

@@ -1,14 +1,18 @@
-const { buildSchema } = require("graphql")
+const {buildSchema} = require("graphql")
 
 export const schema = buildSchema(`
-    scalar HSON
+    scalar JSON
     scalar Date
 
     input GetStoreInput {
         id: String,
         accessToken: String,
     }
-    
+
+    input GetEarnPointInput {
+        id: String,
+    }
+
     type Store {
         id: String,
         name: String,
@@ -25,8 +29,17 @@ export const schema = buildSchema(`
         accessToken: String,
     }
 
+    type EarnPoint {
+        id: String,
+        name: String,
+        status: Boolean,
+        point: String,
+    }
+
     type Query {
         hello: String
         getStoreByID(input: GetStoreInput): Store
+        getEarnPoints : [EarnPoint]
+        getEarnPoint(input: GetEarnPointInput): EarnPoint
     }
 `)

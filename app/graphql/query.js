@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import {gql} from "@apollo/client";
 
 
 export const HELLO_QUERY = gql`
@@ -8,7 +8,7 @@ export const HELLO_QUERY = gql`
 `;
 export const GET_STORE_BY_ID = gql`
     query GetStoreByID($input: GetStoreInput) {
-        GetStoreByID(input: $input) {
+        getStoreByID(input: $input) {
             id
             name
             email
@@ -22,6 +22,28 @@ export const GET_STORE_BY_ID = gql`
             phone
             created_at
             accessToken
+        }
+    }
+`;
+
+export const GET_EARN_POINT = gql`
+    query GetEarnPoint($input : GetEarnPointInput) {
+        getEarnPoint(input: $input) {
+            id
+            name
+            status
+            point
+        }
+    }
+`;
+
+export const GET_EARN_POINTS = gql`
+    query GetEarnPoints {
+        getEarnPoints {
+            id
+            name
+            status
+            point
         }
     }
 `;
