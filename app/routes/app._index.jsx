@@ -1,19 +1,15 @@
 import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import {
-    useActionData,
     useLoaderData,
-    useNavigation,
-    useSubmit,
 } from "@remix-run/react";
 import {
-    Page,
-    VerticalStack,
-    Card,
-    Button,
     Form,
     FormLayout,
     TextField,
+    Page,
+    VerticalStack,
+    Card,
 } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
@@ -21,99 +17,33 @@ import axios from "axios";
 
 export const loader = async ({ request }) => {
     const { session } = await authenticate.admin(request);
-    let shop;
-    const config = {
-        headers: {
-            "X-Shopify-Access-Token": session.accessToken,
-            "Accept-Encoding": "application/json",
-        },
-    };
-    shop = await axios.get(
-        `https://${session.shop}/admin/api/2023-07/shop.json`,
-        config
-    );
-    shop = shop.data.shop;
-
-    return json({ shop: shop });
-};
-
-export async function action({ request }) {
-    const { admin } = await authenticate.admin(request);
-
-    const color = ["Red", "Orange", "Yellow", "Green"][
-        Math.floor(Math.random() * 4)
-    ];
-    const response = await admin.graphql(
-        `#graphql
-      mutation populateProduct($input: ProductInput!) {
-        productCreate(input: $input) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-          }
-        }
-      }`,
+    let store = await axios.get(
+        `https://${session.shop}/admin/api/2024-04/shop.json`,
         {
-            variables: {
-                input: {
-                    title: `${color} Snowboard`,
-                    variants: [{ price: Math.random() * 100 }],
-                },
+            headers: {
+                "X-Shopify-Access-Token": session.accessToken,
+                "Accept-Encoding": "application/json",
             },
         }
     );
+    store = store.data.shop;
 
-    const responseJson = await response.json();
-
-    return json({
-        product: responseJson.data.productCreate.product,
-    });
-}
+    return json({ shop: store });
+};
 
 export default function Index() {
-    const nav = useNavigation();
     const { shop } = useLoaderData();
-    const actionData = useActionData();
-    const submit = useSubmit();
-
-    const isLoading =
-        ["loading", "submitting"].includes(nav.state) && nav.formMethod === "POST";
-
-    const productId = actionData?.product?.id.replace(
-        "gid://shopify/Product/",
-        ""
-    );
 
     useEffect(() => {
-        if (productId) {
-            shopify.toast.show("Product created");
-        }
-    }, [productId]);
+        window.storeData = shop;
+    }, [shop])
 
-    const generateProduct = () => submit({}, { replace: true, method: "POST" });
 
     return (
-        <Page>
-            <ui-title-bar title="Store information">
-                <button variant="primary" onClick={generateProduct}>
-                    Generate a product
-                </button>
-            </ui-title-bar>
+        <Page title="Store information">
             <VerticalStack gap="5">
                 <Card>
-                    <Form onSubmit={() => submit({}, { replace: true, method: "GET" })}>
+                    <Form>
                         <FormLayout>
                             <TextField
                                 label="Shop id"
@@ -240,8 +170,6 @@ export default function Index() {
                                 type="text"
                                 autoComplete="text"
                             />
-
-                            <Button submit>Submit</Button>
                         </FormLayout>
                     </Form>
                 </Card>
