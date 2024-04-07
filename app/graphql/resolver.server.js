@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import StoreModel from '~/models/store.model';
+import PointModel from "~/models/point.model";
 import EarnPointModel from "~/models/earnPoint.model";
 
 export const verifyToken = async (bearerToken) => {
@@ -20,13 +20,33 @@ export const resolver = {
     hello: () => {
         return "Hello World";
     },
-    getStoreByID: async ({input}, request) => {
-        return StoreModel.findOne({_id: input.id, accessToken: input.accessToken});
-    },
     getEarnPoint: async ({input}, request) => {
-        return EarnPointModel.findOne({id: input.id});
+        return EarnPointModel.findOne({id: input.id, key: input.key}, null, {
+            returnDocument: "after",
+            new: true
+        }).lean();
     },
-    getEarnPoints: async (request) => {
-        return EarnPointModel.find();
+    getEarnPoints: async ({input}, request) => {
+        return EarnPointModel.find({id: input.id}, null, {
+            new: true
+        });
+    },
+    getPointProgram: async ({input}, request) => {
+        return PointModel.findOne({id: input.id}, null, {returnDocument: "after", new: true}).lean();
+    },
+    updateEarnPoint: async ({input}, request) => {
+        const {id, key, name, type, reward_points, status} = input;
+        return EarnPointModel.findOneAndUpdate({
+            id: id,
+            key: key
+        }, {
+            type: type,
+            name: name,
+            reward_points: reward_points,
+            status: status,
+        }, {
+            returnDocument: "after",
+            new: true
+        })
     }
 }

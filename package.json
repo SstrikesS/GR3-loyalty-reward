@@ -23,7 +23,7 @@
     "cleanup": "rimraf --glob extensions/*/assets/*.{json,geetkeep}"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.1",
+    "@apollo/client": "^3.8.8",
     "@prisma/client": "^4.13.0",
     "@remix-run/node": "^2.0.0",
     "@remix-run/react": "^2.0.0",
@@ -48,12 +48,13 @@
     "jsonwebtoken": "^9.0.1",
     "liquidjs": "^10.10.2",
     "lodash": "^4.17.21",
-    "mongoose": "^7.4.3",
+    "mongoose": "^8.0.1",
     "postgres": "^3.4.3",
     "prisma": "^4.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "remix-auth": "^3.5.1"
+    "remix-auth": "^3.5.1",
+    "ulid": "^2.3.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.19.1",

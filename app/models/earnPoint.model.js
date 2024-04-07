@@ -7,18 +7,33 @@ const earnPointSchema = new Schema({
         type: String,
         require: true,
     },
+    key: {
+        type: String,
+        required: true,
+    },
+    type: {
+        type: Number
+    },
     name: {
         type: String,
-        require: true,
+        required: true,
+    },
+    reward_points: {
+        type: Number,
+        required: true,
+    },
+    limit: {
+        type: Number,
+    },
+    requirement: {
+        type: Schema.Types.Mixed,
     },
     status: {
         type: Boolean,
-        require: true,
-    },
-    point: {
-        type: Number,
-        require: true,
+        required: true,
     }
+}, {
+    timestamps: true,
 })
 
-export default mongoose.model('Earn', earnPointSchema);
+export default mongoose.model('EarnPoints', earnPointSchema);

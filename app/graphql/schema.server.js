@@ -4,42 +4,57 @@ export const schema = buildSchema(`
     scalar JSON
     scalar Date
 
-    input GetStoreInput {
-        id: String,
-        accessToken: String,
-    }
-
     input GetEarnPointInput {
         id: String,
+        key: String
     }
 
-    type Store {
-        id: String,
-        name: String,
-        email: String,
-        shop: String,
-        domain: String,
-        scope: String,
-        country: String,
-        shop_owner: String,
-        iana_timezone: String,
-        currency: String,
-        phone: String,
-        created_at: String,
-        accessToken: String,
+    input GetPointProgramInput {
+        id: String
     }
 
-    type EarnPoint {
+    input UpdateEarnPointInput{
         id: String,
+        key: String,
         name: String,
+        reward_points: Int,
+        status: Boolean
+    }
+
+    type PointCurrencySchema {
+        singular: String,
+        plural: String
+    }
+
+    type EarnPointSchema {
+        id: String,
+        key: String,
+        type: Int,
+        name: String,
+        reward_points: Int,
+        limit: Int,
+        requirement: JSON,
         status: Boolean,
-        point: String,
+        createdAt: Date,
+        updatedAt: Date
+    }
+
+    type PointProgram {
+        id: String,
+        point_currency: PointCurrencySchema,
+        status: Boolean
+        createdAt: Date,
+        updatedAt: Date
     }
 
     type Query {
         hello: String
-        getStoreByID(input: GetStoreInput): Store
-        getEarnPoints : [EarnPoint]
-        getEarnPoint(input: GetEarnPointInput): EarnPoint
+        getEarnPoint(input: GetEarnPointInput): EarnPointSchema
+        getEarnPoints(input: GetEarnPointInput): [EarnPointSchema]
+        getPointProgram(input: GetPointProgramInput): PointProgram
+    }
+
+    type Mutation {
+        updateEarnPoint(input: UpdateEarnPointInput): EarnPointSchema
     }
 `)

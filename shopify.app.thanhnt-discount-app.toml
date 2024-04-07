@@ -2,7 +2,7 @@
 
 name = "thanhnt-discount-app"
 client_id = "c0237746d5feff0054b309baee1f1f36"
-application_url = "https://defeat-taiwan-doing-booking.trycloudflare.com"
+application_url = "https://classification-sentences-occasionally-aspects.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = ""
 
 [auth]
 redirect_urls = [
-  "https://defeat-taiwan-doing-booking.trycloudflare.com/auth/callback",
-  "https://defeat-taiwan-doing-booking.trycloudflare.com/auth/shopify/callback",
-  "https://defeat-taiwan-doing-booking.trycloudflare.com/api/auth/callback",
-  "https://defeat-taiwan-doing-booking.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://classification-sentences-occasionally-aspects.trycloudflare.com/auth/callback",
+  "https://classification-sentences-occasionally-aspects.trycloudflare.com/auth/shopify/callback",
+  "https://classification-sentences-occasionally-aspects.trycloudflare.com/api/auth/callback",
+  "https://classification-sentences-occasionally-aspects.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

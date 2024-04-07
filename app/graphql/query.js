@@ -6,44 +6,49 @@ export const HELLO_QUERY = gql`
         hello
     }
 `;
-export const GET_STORE_BY_ID = gql`
-    query GetStoreByID($input: GetStoreInput) {
-        getStoreByID(input: $input) {
-            id
-            name
-            email
-            shop
-            domain
-            scope
-            country
-            shop_owner
-            iana_timezone
-            currency
-            phone
-            created_at
-            accessToken
-        }
-    }
-`;
-
 export const GET_EARN_POINT = gql`
     query GetEarnPoint($input : GetEarnPointInput) {
         getEarnPoint(input: $input) {
             id
+            key
+            type
             name
+            reward_points
+            limit
+            requirement
             status
-            point
+            createdAt
+            updatedAt
         }
     }
 `;
-
 export const GET_EARN_POINTS = gql`
-    query GetEarnPoints {
-        getEarnPoints {
+    query GetEarnPoints($input : GetEarnPointInput) {
+        getEarnPoints(input: $input) {
             id
+            key
+            type
             name
+            reward_points
+            limit
+            requirement
             status
-            point
+            createdAt
+            updatedAt
+        }
+    }
+`;
+export const GET_POINT_PROGRAM = gql`
+    query GetPointProgram($input : GetPointProgramInput) {
+        getPointProgram(input: $input) {
+            id
+            point_currency {
+                singular
+                plural
+            }
+            status
+            createdAt
+            updatedAt
         }
     }
 `;
