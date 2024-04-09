@@ -1,9 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "thanhnt-discount-app"
 client_id = "c0237746d5feff0054b309baee1f1f36"
-application_url = "https://classification-sentences-occasionally-aspects.trycloudflare.com"
+name = "thanhnt-discount-app"
+application_url = "https://writer-asthma-connectors-defence.trycloudflare.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "sstrikess-test-discount-app.myshopify.com"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -11,10 +15,9 @@ scopes = ""
 
 [auth]
 redirect_urls = [
-  "https://classification-sentences-occasionally-aspects.trycloudflare.com/auth/callback",
-  "https://classification-sentences-occasionally-aspects.trycloudflare.com/auth/shopify/callback",
-  "https://classification-sentences-occasionally-aspects.trycloudflare.com/api/auth/callback",
-  "https://classification-sentences-occasionally-aspects.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://writer-asthma-connectors-defence.trycloudflare.com/auth/callback",
+  "https://writer-asthma-connectors-defence.trycloudflare.com/auth/shopify/callback",
+  "https://writer-asthma-connectors-defence.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -22,7 +25,3 @@ api_version = "2024-01"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "sstrikess-test-discount-app.myshopify.com"
