@@ -3,18 +3,27 @@ import {
     BlockStack,
     Card,
     Divider,
-    DataTable,
     Layout,
+    Button,
     Page,
     Text,
-    Link, Spinner
+    Spinner, ResourceList, ResourceItem, Icon, Modal, InlineGrid, EmptyState
 } from "@shopify/polaris";
+import {
+    DiscountIcon,
+    CashDollarIcon,
+    DeliveryIcon,
+    ProductIcon,
+    GiftCardIcon
+
+} from '@shopify/polaris-icons';
 import {authenticate} from "../shopify.server";
 import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useQuery} from "@apollo/client";
-import {GET_EARN_POINTS, GET_POINT_PROGRAM} from "../graphql/query";
+import {GET_EARN_POINTS, GET_POINT_PROGRAM, GET_REDEEM_POINTS} from "../graphql/query";
 import axios from "axios";
+import {useState} from "react";
 
 export async function loader({request}) {
     const {session} = await authenticate.admin(request);
@@ -28,6 +37,7 @@ export async function loader({request}) {
             },
         }
     );
+
     store = store.data.shop;
 
     return json({
@@ -37,7 +47,9 @@ export async function loader({request}) {
 }
 
 export default function PointProgram() {
-    const {session, shop} = useLoaderData();
+    const {shop} = useLoaderData();
+
+    const [isShowModal, setIsShowModal] = useState(false);
 
     const {data: PointProgram, loading: PointProgramLoading} = useQuery(GET_POINT_PROGRAM, {
         variables: {
@@ -55,26 +67,61 @@ export default function PointProgram() {
         }
     });
 
-    if (PointProgramLoading || EarnPointProgramLoading) {
+    const {data: RedeemPointProgram, loading: RedeemPointProgramLoading} = useQuery(GET_REDEEM_POINTS, {
+        variables: {
+            input: {
+                id: `${shop.id}`
+            }
+        }
+    });
+
+    if (PointProgramLoading || EarnPointProgramLoading || RedeemPointProgramLoading) {
         return (
             <Page>
                 <Spinner/>
             </Page>
         );
-    } else {
-        console.log(EarnPointProgram.getEarnPoints);
     }
 
     let EPointData = EarnPointProgram.getEarnPoints.map((value) => {
+        return {
+            id: value.key,
+            url: `../earn/${value.key}`,
+            reward_point: value.reward_points,
+            status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
+            name: value.name,
+            icon: value.icon,
+        };
+    });
+    let RPointData = RedeemPointProgram.getRedeemPoints.map((value) => {
         return [
-            <Link
-                removeUnderline
-                url={`../earn/${value.key}`}
-            >{value.name}</Link>,
-            value.reward_points,
-            value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>
+            {
+                id: value.key,
+                url: `../new_reward/${value.key}`,
+                reward_point: value.reward_points,
+                status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
+                name: value.name,
+                icon: value.icon,
+            }
         ];
     })
+
+
+    const addRedeemPoints = () => {
+        setIsShowModal(true);
+    }
+    const activator = <Button size="medium" onClick={addRedeemPoints}>Add new ways</Button>;
+
+    const emptyStateMarkup =
+        <EmptyState
+            heading="Create new way to get started"
+            action={{
+                content: 'Add new way',
+                onAction: addRedeemPoints
+            }}
+            image="https://cdn.shopify.com/s/files/1/2376/3301/products/emptystate-files.png"
+        >
+        </EmptyState>;
 
     return (
         <Page
@@ -104,25 +151,164 @@ export default function PointProgram() {
                             </Text>
                             <Divider borderColor="border"/>
                             <Card>
-                                <DataTable
-                                    columnContentTypes={[
-                                        'text',
-                                        'numeric',
-                                        'text',
-                                    ]}
-                                    headings={[
-                                        'Program Name',
-                                        'Points',
-                                        'Status',
-                                    ]}
-                                    rows={EPointData}
-                                    pagination={{
-                                        hasNext: true,
-                                        onNext: () => {
+                                <ResourceList items={EPointData}
+                                              renderItem={(item) => {
+                                                  const {id, url, name, icon, reward_point, status} = item;
+                                                  const media = <img
+                                                      src={icon}
+                                                      alt=""/>
+
+                                                  return (
+                                                      <ResourceItem
+                                                          id={id}
+                                                          url={url}
+                                                          media={media}
+                                                          accessibilityLabel={`View details for ${name}`}
+                                                      >
+                                                          <Text variant="bodyMd" fontWeight="bold" as="h3">
+                                                              {name}
+                                                          </Text>
+                                                          <div>
+                                                              <InlineGrid gap="400" columns={5}>
+                                                                  <div>{reward_point} points</div>
+                                                                  <div></div>
+                                                                  <div></div>
+                                                                  <div></div>
+                                                                  <div style={{float: "right"}}>{status}</div>
+                                                              </InlineGrid>
+                                                          </div>
+                                                      </ResourceItem>
+                                                  );
+                                              }}
+                                />
+                            </Card>
+                        </BlockStack>
+                    </Layout.Section>
+                </Layout>
+                <Divider borderColor="border-inverse"/>
+                <Layout>
+                    <Layout.Section variant="oneThird">
+                        <BlockStack gap="300">
+                            <Text variant="headingMd" as="h6">
+                                Redeem Points
+                            </Text>
+                            <p>Set up how your customers can get rewards with points they've earned</p>
+                            <div>
+                                <Modal
+                                    open={isShowModal}
+                                    onClose={() => setIsShowModal(false)}
+                                    activator={activator} title='Add new ways'
+                                    secondaryActions={[
+                                        {
+                                            content: 'Cancel',
+                                            onAction: () => setIsShowModal(false),
                                         },
-                                    }}
+                                    ]}
                                 >
-                                </DataTable>
+                                    <ResourceList items={[
+                                        {
+                                            id: '1',
+                                            url: '../new_reward/amount_discount',
+                                            name: 'Amount discount',
+                                            icon: CashDollarIcon,
+                                        },
+                                        {
+                                            id: '2',
+                                            url: '../new_reward/percentage_off',
+                                            name: 'Percentage off',
+                                            icon: DiscountIcon,
+                                        },
+                                        {
+                                            id: '3',
+                                            url: '../new_reward/free_shipping',
+                                            name: 'Free Shipping',
+                                            icon: DeliveryIcon,
+                                        },
+                                        {
+                                            id: '4',
+                                            url: '../new_reward/free_product',
+                                            name: 'Free Product',
+                                            icon: ProductIcon,
+                                        },
+                                        {
+                                            id: '5',
+                                            url: '../new_reward/gift_card',
+                                            name: 'Gift Card',
+                                            icon: GiftCardIcon,
+                                        },
+                                    ]}
+                                                  renderItem={(item) => {
+                                                      const {id, url, name, icon} = item;
+                                                      const media = <Icon source={icon} tone='base'/>
+
+                                                      return (
+                                                          <ResourceItem
+                                                              id={id}
+                                                              url={url}
+                                                              media={media}
+                                                              accessibilityLabel={`View details for ${name}`}
+                                                          >
+                                                              <Text variant="bodyMd" fontWeight="bold" as="h3">
+                                                                  {name}
+                                                              </Text>
+                                                          </ResourceItem>
+                                                      );
+                                                  }}
+                                    />
+                                </Modal>
+                            </div>
+                        </BlockStack>
+                    </Layout.Section>
+                    <Layout.Section>
+                        <BlockStack gap="200">
+                            <Text variant="headingMd" as="h6">
+                                WAY TO REDEEM
+                            </Text>
+                            <Divider borderColor="border"/>
+                            <Card>
+                                {RPointData ? (
+                                    <ResourceList
+                                        emptyState={emptyStateMarkup}
+                                        items={RPointData}
+                                        renderItem={() => <></>}
+                                        resourceName={{singular: 'program', plural: 'programs'}}
+                                    >
+                                    </ResourceList>
+                                ) : (
+                                    <ResourceList
+                                        items={RPointData}
+                                        renderItem={(item) => {
+                                            const {id, url, name, icon, reward_point, status} = item;
+                                            const media = <img
+                                                src={icon}
+                                                alt=""/>
+
+                                            return (
+                                                <ResourceItem
+                                                    id={id}
+                                                    url={url}
+                                                    media={media}
+                                                    accessibilityLabel={`View details for ${name}`}
+                                                >
+                                                    <Text variant="bodyMd" fontWeight="bold" as="h3">
+                                                        {name}
+                                                    </Text>
+                                                    <div>
+                                                        <InlineGrid gap="400" columns={5}>
+                                                            <div>{reward_point} points</div>
+                                                            <div></div>
+                                                            <div></div>
+                                                            <div></div>
+                                                            <div style={{float: "right"}}>{status}</div>
+                                                        </InlineGrid>
+                                                    </div>
+                                                </ResourceItem>
+                                            );
+                                        }}
+                                    />
+                                )}
+
+
                             </Card>
                         </BlockStack>
                     </Layout.Section>

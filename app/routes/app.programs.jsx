@@ -3,8 +3,15 @@ import {
     Page, MediaCard
 } from "@shopify/polaris";
 import {useNavigate} from "@remix-run/react";
+import {useEffect, useState} from "react";
+
 
 export default function Programs() {
+    const [publicPath, setPublicPath] = useState('');
+
+    useEffect( () => {
+        setPublicPath(window.location.protocol + "//" + window.location.host)
+    }, [])
 
     const navigate = useNavigate();
     return (
@@ -29,7 +36,7 @@ export default function Programs() {
                                 objectFit: 'cover',
                                 objectPosition: 'center',
                             }}
-                            src={window.location.protocol + "//" + window.location.host + "/earn_points.jpg"}
+                            src={publicPath + "/earn_points.jpg"}
                         />
                     </MediaCard>
                 </div>
@@ -51,7 +58,7 @@ export default function Programs() {
                                 objectFit: 'cover',
                                 objectPosition: 'center',
                             }}
-                            src={window.location.protocol + "//" + window.location.host + "/referral_program.jpg"}
+                            src={publicPath + "/referral_program.jpg"}
                         />
                     </MediaCard>
                 </div>
@@ -73,7 +80,7 @@ export default function Programs() {
                                 objectFit: 'cover',
                                 objectPosition: 'center',
                             }}
-                            src={window.location.protocol + "//" + window.location.host + "/vip_program.jpg"}
+                            src={publicPath + "/vip_program.jpg"}
                         />
                     </MediaCard>
                 </div>

@@ -27,7 +27,9 @@ export default function EarnSingular() {
     const [rewardPointError, setRewardPointError] = useState(null);
     const [nameError, setNameError] = useState(null);
     const [programStatus, setProgramStatus] = useState('disable');
+    const [programType, setProgramType] = useState(0);
     const [programName, setProgramName] = useState('Program');
+    const [programShareLink, setProgramShareLink] = useState('https://');
     const [isSync, setIsSync] = useState(true);
     const [isUpdated, setIsUpdated] = useState(false);
 
@@ -51,7 +53,10 @@ export default function EarnSingular() {
                     input: {
                         id: `${shop.id}`,
                         key: earnP.getEarnPoint.key,
+                        icon: null,
                         name: programName,
+                        type: programType ?? undefined,
+                        link: programShareLink ?? undefined,
                         reward_points: rewardPoint,
                         status: programStatus !== 'disable'
                     }
@@ -80,9 +85,15 @@ export default function EarnSingular() {
         setProgramStatus(newValue);
     }, [],);
 
+    const programTypeHandler = useCallback((_, newValue) => {
+        setProgramType(Number(newValue));
+    }, [],)
+
     const handleRewardPointChange = useCallback((value) => setRewardPoint(Number(value)), [],)
 
     const handleNameChange = useCallback((value) => setProgramName(value), [],);
+
+    const handleProgramShareLinkChange = useCallback((value) => setProgramShareLink(value), [],);
 
 
     useEffect(() => {
@@ -110,7 +121,9 @@ export default function EarnSingular() {
                 setProgramStatus('disable')
             }
             setRewardPoint(earnP.getEarnPoint.reward_points)
-            setProgramName(earnP.getEarnPoint.name);
+            setProgramName(earnP.getEarnPoint.name)
+            setProgramType(earnP.getEarnPoint.type ?? null);
+            setProgramShareLink(earnP.getEarnPoint.link ?? null)
             setIsSync(false);
         }
 
@@ -133,66 +146,292 @@ export default function EarnSingular() {
                     <Badge tone="critical">Inactive</Badge>}
                 primaryAction={<Button variant="primary" submit loading={isUpdated}>Save</Button>}
             >
-                <BlockStack gap="500">
-                    <Card>
+                    {earnP.getEarnPoint.key === 'Order' ? (
                         <BlockStack gap="500">
-                            <Text variant="headingMd" as="h6">
-                                Program Name
-                            </Text>
-                            <TextField
-                                value={programName}
-                                onChange={handleNameChange}
-                                error={nameError}
-                                autoComplete="off"
-                                label="">
-                            </TextField>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Name
+                                    </Text>
+                                    <TextField
+                                        value={programName}
+                                        onChange={handleNameChange}
+                                        error={nameError}
+                                        autoComplete="off"
+                                        label="">
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Earning Value
+                                    </Text>
+                                    <RadioButton
+                                        label="Increments of points"
+                                        id="1"
+                                        onChange={programTypeHandler}
+                                        checked={programType === 1}
+                                    >
+                                    </RadioButton>
+                                    <RadioButton
+                                        label="Fixed amount of points"
+                                        id="0"
+                                        onChange={programTypeHandler}
+                                        checked={programType === 0}
+                                    >
+                                    </RadioButton>
+                                    {programType === 0 ? (
+                                        <TextField
+                                            label="Point earned when complete an order"
+                                            type="number"
+                                            value={rewardPoint}
+                                            suffix="points"
+                                            onChange={handleRewardPointChange}
+                                            error={rewardPointError}
+                                            autoComplete="off"
+                                        >
+                                        </TextField>
+                                    ) : (
+                                        <TextField
+                                            label="Points earned for every $1 spent"
+                                            type="number"
+                                            value={rewardPoint}
+                                            suffix="points"
+                                            onChange={handleRewardPointChange}
+                                            error={rewardPointError}
+                                            autoComplete="off"
+                                        >
+                                        </TextField>
+                                    )}
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Customer Requirement
+                                    </Text>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Status
+                                    </Text>
+                                    <RadioButton
+                                        label="Active"
+                                        id="active"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'active'}
+                                    ></RadioButton>
+                                    <RadioButton
+                                        label="Disable"
+                                        id="disable"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'disable'}
+                                    ></RadioButton>
+                                </BlockStack>
+                            </Card>
                         </BlockStack>
-                    </Card>
-                    <Card>
+                    ) : earnP.getEarnPoint.key === 'DoB' ? (
                         <BlockStack gap="500">
-                            <Text variant="headingMd" as="h6">
-                                Earning Value
-                            </Text>
-                            <TextField
-                                label="Point earned when complete an order"
-                                type="number"
-                                value={rewardPoint}
-                                suffix="points"
-                                onChange={handleRewardPointChange}
-                                error={rewardPointError}
-                                autoComplete="off"
-                            >
-                            </TextField>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Name
+                                    </Text>
+                                    <TextField
+                                        value={programName}
+                                        onChange={handleNameChange}
+                                        error={nameError}
+                                        autoComplete="off"
+                                        label="">
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Earning Value
+                                    </Text>
+                                    <TextField
+                                        label="Point earned"
+                                        type="number"
+                                        value={rewardPoint}
+                                        suffix="points"
+                                        onChange={handleRewardPointChange}
+                                        error={rewardPointError}
+                                        autoComplete="off"
+                                    >
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Customer Requirement
+                                    </Text>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Status
+                                    </Text>
+                                    <RadioButton
+                                        label="Active"
+                                        id="active"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'active'}
+                                    ></RadioButton>
+                                    <RadioButton
+                                        label="Disable"
+                                        id="disable"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'disable'}
+                                    ></RadioButton>
+                                </BlockStack>
+                            </Card>
                         </BlockStack>
-                    </Card>
-                    <Card>
+                    ) : earnP.getEarnPoint.key === 'FB_Share' ? (
                         <BlockStack gap="500">
-                            <Text variant="headingMd" as="h6">
-                                Customer Requirement
-                            </Text>
-
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Name
+                                    </Text>
+                                    <TextField
+                                        value={programName}
+                                        onChange={handleNameChange}
+                                        error={nameError}
+                                        autoComplete="off"
+                                        label="">
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Social Link
+                                    </Text>
+                                    <TextField
+                                        value={programShareLink}
+                                        onChange={handleProgramShareLinkChange}
+                                        error={nameError}
+                                        autoComplete="off"
+                                        label="Facebook page URL "
+                                    >
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Earning Value
+                                    </Text>
+                                    <TextField
+                                        label="Point earned when complete an action"
+                                        type="number"
+                                        value={rewardPoint}
+                                        suffix="points"
+                                        onChange={handleRewardPointChange}
+                                        error={rewardPointError}
+                                        autoComplete="off"
+                                    >
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Customer Requirement
+                                    </Text>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Status
+                                    </Text>
+                                    <RadioButton
+                                        label="Active"
+                                        id="active"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'active'}
+                                    ></RadioButton>
+                                    <RadioButton
+                                        label="Disable"
+                                        id="disable"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'disable'}
+                                    ></RadioButton>
+                                </BlockStack>
+                            </Card>
                         </BlockStack>
-                    </Card>
-                    <Card>
+                    ) : earnP.getEarnPoint.key === 'SignIn' ? (
                         <BlockStack gap="500">
-                            <Text variant="headingMd" as="h6">
-                                Program Status
-                            </Text>
-                            <RadioButton
-                                label="Active"
-                                id="active"
-                                onChange={programStatusHandler}
-                                checked={programStatus === 'active'}
-                            ></RadioButton>
-                            <RadioButton
-                                label="Disable"
-                                id="disable"
-                                onChange={programStatusHandler}
-                                checked={programStatus === 'disable'}
-                            ></RadioButton>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Name
+                                    </Text>
+                                    <TextField
+                                        value={programName}
+                                        onChange={handleNameChange}
+                                        error={nameError}
+                                        autoComplete="off"
+                                        label="">
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Earning Value
+                                    </Text>
+                                    <TextField
+                                        label="Point earned"
+                                        type="number"
+                                        value={rewardPoint}
+                                        suffix="points"
+                                        onChange={handleRewardPointChange}
+                                        error={rewardPointError}
+                                        autoComplete="off"
+                                    >
+                                    </TextField>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Customer Requirement
+                                    </Text>
+                                </BlockStack>
+                            </Card>
+                            <Card>
+                                <BlockStack gap="500">
+                                    <Text variant="headingMd" as="h6">
+                                        Program Status
+                                    </Text>
+                                    <RadioButton
+                                        label="Active"
+                                        id="active"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'active'}
+                                    ></RadioButton>
+                                    <RadioButton
+                                        label="Disable"
+                                        id="disable"
+                                        onChange={programStatusHandler}
+                                        checked={programStatus === 'disable'}
+                                    ></RadioButton>
+                                </BlockStack>
+                            </Card>
                         </BlockStack>
-                    </Card>
-                </BlockStack>
+                    ) : (
+                        <BlockStack gap="500"></BlockStack>
+                    )
+                }
             </Page>
         </Form>)
 }

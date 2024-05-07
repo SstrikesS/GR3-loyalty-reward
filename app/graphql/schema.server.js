@@ -13,9 +13,15 @@ export const schema = buildSchema(`
         id: String
     }
 
-    input UpdateEarnPointInput{
+    input GetRedeemPointInput {
+        id: String
+    }
+
+    input UpdateEarnPointInput {
         id: String,
         key: String,
+        type: Int,
+        link: String,
         name: String,
         reward_points: Int,
         status: Boolean
@@ -29,12 +35,37 @@ export const schema = buildSchema(`
     type EarnPointSchema {
         id: String,
         key: String,
+        icon: String,
         type: Int,
+        link: String,
         name: String,
         reward_points: Int,
         limit: Int,
         requirement: JSON,
         status: Boolean,
+        createdAt: Date,
+        updatedAt: Date
+    }
+
+    type DiscountItems {
+        all: Boolean,
+        collection: [String]
+    }
+
+    type RedeemPointSchema {
+        id: String,
+        reward_id: String,
+        key: String,
+        type: Int,
+        name: String,
+        reward_points: Int,
+        items: DiscountItems,
+        minimumReq: Int,
+        prefix: String,
+        status: Boolean,
+        combination: String,
+        start_at: Date,
+        expire_at: Date,
         createdAt: Date,
         updatedAt: Date
     }
@@ -51,6 +82,7 @@ export const schema = buildSchema(`
         hello: String
         getEarnPoint(input: GetEarnPointInput): EarnPointSchema
         getEarnPoints(input: GetEarnPointInput): [EarnPointSchema]
+        getRedeemPoints(input: GetRedeemPointInput): [RedeemPointSchema]
         getPointProgram(input: GetPointProgramInput): PointProgram
     }
 

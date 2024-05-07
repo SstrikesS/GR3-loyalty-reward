@@ -31,6 +31,7 @@ export const loader = async ({request}) => {
             {
                 id: store.id,
                 key: 'Order',
+                icon: 'https://cdn-icons-png.flaticon.com/32/2435/2435281.png',
                 type: 0,
                 name: 'Complete an order',
                 reward_points: 100,
@@ -41,8 +42,9 @@ export const loader = async ({request}) => {
             {
                 id: store.id,
                 key: 'FB_Share',
-                type: 0,
+                icon: 'https://cdn-icons-png.flaticon.com/32/1051/1051360.png',
                 name: 'Share on Facebook',
+                link: 'https://',
                 reward_points: 100,
                 requirement: null,
                 limit: 0,
@@ -51,7 +53,7 @@ export const loader = async ({request}) => {
             {
                 id: store.id,
                 key: 'DoB',
-                type: 0,
+                icon: 'https://cdn-icons-png.flaticon.com/32/6479/6479517.png',
                 name: 'Happy Birthday',
                 reward_points: 100,
                 requirement: null,
@@ -61,7 +63,7 @@ export const loader = async ({request}) => {
             {
                 id: store.id,
                 key: 'SignIn',
-                type: 0,
+                icon: 'https://cdn-icons-png.flaticon.com/32/10479/10479877.png',
                 name: 'Sign In',
                 reward_points: 100,
                 requirement: null,

@@ -2,22 +2,23 @@
 
 client_id = "c0237746d5feff0054b309baee1f1f36"
 name = "thanhnt-discount-app"
-application_url = "https://writer-asthma-connectors-defence.trycloudflare.com"
+application_url = "https://gossip-authors-sells-self.trycloudflare.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "sstrikess-test-discount-app.myshopify.com"
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "read_customers,read_products,read_shipping,write_discounts"
 
 [auth]
 redirect_urls = [
-  "https://writer-asthma-connectors-defence.trycloudflare.com/auth/callback",
-  "https://writer-asthma-connectors-defence.trycloudflare.com/auth/shopify/callback",
-  "https://writer-asthma-connectors-defence.trycloudflare.com/api/auth/callback"
+  "https://gossip-authors-sells-self.trycloudflare.com/auth/callback",
+  "https://gossip-authors-sells-self.trycloudflare.com/auth/shopify/callback",
+  "https://gossip-authors-sells-self.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

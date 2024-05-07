@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import PointModel from "~/models/point.model";
 import EarnPointModel from "~/models/earnPoint.model";
+import RedeemPointModel from "~/models/redeemPoint.model";
 
 export const verifyToken = async (bearerToken) => {
     if (!bearerToken) {
@@ -31,17 +32,24 @@ export const resolver = {
             new: true
         });
     },
+    getRedeemPoints: async ({input}, request) => {
+      return RedeemPointModel.find({id: input.id}, null, {
+          new: true
+      });
+    },
     getPointProgram: async ({input}, request) => {
         return PointModel.findOne({id: input.id}, null, {returnDocument: "after", new: true}).lean();
     },
     updateEarnPoint: async ({input}, request) => {
-        const {id, key, name, type, reward_points, status} = input;
+        const {id, key, name, link, type, reward_points, icon, status} = input;
         return EarnPointModel.findOneAndUpdate({
             id: id,
             key: key
         }, {
-            type: type,
+            type: type ?? undefined,
+            icon: icon ?? undefined,
             name: name,
+            link: link ?? undefined,
             reward_points: reward_points,
             status: status,
         }, {

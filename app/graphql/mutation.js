@@ -6,6 +6,7 @@ export const UPDATE_EARN_POINT = gql`
             id
             key
             name
+            link
             reward_points
             limit
             requirement

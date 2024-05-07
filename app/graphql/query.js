@@ -11,7 +11,9 @@ export const GET_EARN_POINT = gql`
         getEarnPoint(input: $input) {
             id
             key
+            icon
             type
+            link
             name
             reward_points
             limit
@@ -27,12 +29,38 @@ export const GET_EARN_POINTS = gql`
         getEarnPoints(input: $input) {
             id
             key
+            icon
             type
+            link
             name
             reward_points
             limit
             requirement
             status
+            createdAt
+            updatedAt
+        }
+    }
+`;
+export const GET_REDEEM_POINTS = gql`
+    query GetRedeemPoints ($input : GetRedeemPointInput) {
+        getRedeemPoints(input: $input) {
+            id
+            reward_id
+            key
+            type
+            name
+            reward_points
+            items {
+                all
+                collection
+            }
+            minimumReq
+            prefix
+            status
+            combination
+            start_at
+            expire_at
             createdAt
             updatedAt
         }
