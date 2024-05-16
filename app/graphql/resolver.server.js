@@ -40,6 +40,14 @@ export const resolver = {
     getPointProgram: async ({input}, request) => {
         return PointModel.findOne({id: input.id}, null, {returnDocument: "after", new: true}).lean();
     },
+
+    createRedeemPoint: async ({input}, request) => {
+        return RedeemPointModel.create({
+            ...input,
+            status: true,
+        });
+    },
+
     updateEarnPoint: async ({input}, request) => {
         const {id, key, name, link, type, reward_points, icon, status} = input;
         return EarnPointModel.findOneAndUpdate({

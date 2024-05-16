@@ -31,6 +31,7 @@ export default function App() {
 
     return (
         <CustomPolarisAppProvider>
+            <p>Heheheheeh</p>
             <div className="center-form">
                 <Page>
                     <Card>

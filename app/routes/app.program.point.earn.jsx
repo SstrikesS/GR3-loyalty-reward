@@ -8,8 +8,14 @@ import axios from "axios";
 import {useCallback, useEffect, useState} from "react";
 import {UPDATE_EARN_POINT} from "../graphql/mutation";
 
-export async function loader({request, params}) {
+export async function loader({request}) {
     const {session} = await authenticate.admin(request);
+    const url = new URL(request.url);
+    const key = url.searchParams.get('type');
+
+    if(key) {
+        url.searchParams.set("type", 'Order');
+    }
 
     let store = await axios.get(`https://${session.shop}/admin/api/2024-04/shop.json`, {
         headers: {
@@ -18,7 +24,7 @@ export async function loader({request, params}) {
     });
     store = store.data.shop;
 
-    return json({session: session, shop: store, id: params.id});
+    return json({session: session, shop: store, id: key ?? 'Order'});
 }
 
 export default function EarnSingular() {
@@ -141,7 +147,7 @@ export default function EarnSingular() {
         <Form onSubmit={handleSubmit}>
             <Page
                 title={programName}
-                backAction={{content: "Program", url: "../point_program"}}
+                backAction={{content: "Program", url: "../program/points"}}
                 titleMetadata={programStatus === 'active' ? <Badge tone="success">Active</Badge> :
                     <Badge tone="critical">Inactive</Badge>}
                 primaryAction={<Button variant="primary" submit loading={isUpdated}>Save</Button>}

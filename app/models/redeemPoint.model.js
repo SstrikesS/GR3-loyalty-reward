@@ -2,12 +2,18 @@ import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
-const DiscountItems = new Schema({
-    all: {
+const Combination = new Schema({
+    order: {
         type: Boolean,
+        require: true,
     },
-    collection: {
-        type: [String],
+    product: {
+        type: Boolean,
+        require: true,
+    },
+    shipping: {
+        type: Boolean,
+        require: true,
     },
 })
 
@@ -16,43 +22,42 @@ const redeemPointSchema = new Schema({
         type: String,
         require: true,
     },
-    reward_id: {
+    store_id: {
         type: String,
-        required: true,
+        require: true,
     },
     key: {
         type: String,
         required: true,
     },
-    type: {
-        type: Number
-    },
-    name: {
+    title: {
         type: String,
         required: true,
     },
-    reward_points: {
-        type: Number,
-        required: true,
-    },
-    items: {
-        type: DiscountItems,
-        required: true,
-    },
-    minimumReq: {
-        type: Number,
-        required: true,
-    },
-    prefix: {
+    pointsCost: {
         type: String,
-    },
-    status: {
-        type: Boolean,
         required: true,
+    },
+    discountValue: {
+        type: String,
+        required: true,
+    },
+    programApply: {
+        type: String,
+        required: true,
+    },
+    collections: {
+        type: [String],
+    },
+    prefixCode: {
+        type: String
     },
     combination: {
-        type: String,
+        type: Combination,
         required: true,
+    },
+    minimumRequire: {
+        type: String,
     },
     start_at: {
         type: Date,
@@ -60,6 +65,10 @@ const redeemPointSchema = new Schema({
     },
     expire_at: {
         type: Date,
+    },
+    status: {
+        type: Boolean,
+        required: true,
     }
 }, {
     timestamps: true,

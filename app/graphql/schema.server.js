@@ -17,6 +17,28 @@ export const schema = buildSchema(`
         id: String
     }
 
+    input CombinationSchemaInput {
+        order: Boolean,
+        product: Boolean,
+        shipping: Boolean,
+    }
+
+    input CreateRedeemPointInput {
+        store_id: String,
+        id: String,
+        key: String,
+        title: String,
+        pointsCost: String,
+        discountValue: String,
+        programApply: String,
+        collections: [String],
+        prefixCode: String,
+        combination: CombinationSchemaInput,
+        minimumRequire: String,
+        start_at: Date,
+        expire_at: Date,
+    }
+
     input UpdateEarnPointInput {
         id: String,
         key: String,
@@ -47,25 +69,27 @@ export const schema = buildSchema(`
         updatedAt: Date
     }
 
-    type DiscountItems {
-        all: Boolean,
-        collection: [String]
+    type CombinationSchema {
+        order: Boolean,
+        product: Boolean,
+        shipping: Boolean,
     }
 
     type RedeemPointSchema {
         id: String,
-        reward_id: String,
+        store_id: String,
         key: String,
-        type: Int,
-        name: String,
-        reward_points: Int,
-        items: DiscountItems,
-        minimumReq: Int,
-        prefix: String,
-        status: Boolean,
-        combination: String,
+        title: String,
+        pointsCost: String,
+        discountValue: String,
+        programApply: String,
+        collections: [String],
+        prefixCode: String,
+        combination: CombinationSchema,
+        minimumRequire: String,
         start_at: Date,
         expire_at: Date,
+        status: Boolean,
         createdAt: Date,
         updatedAt: Date
     }
@@ -88,5 +112,6 @@ export const schema = buildSchema(`
 
     type Mutation {
         updateEarnPoint(input: UpdateEarnPointInput): EarnPointSchema
+        createRedeemPoint(input: CreateRedeemPointInput): RedeemPointSchema
     }
 `)

@@ -86,7 +86,7 @@ export default function PointProgram() {
     let EPointData = EarnPointProgram.getEarnPoints.map((value) => {
         return {
             id: value.key,
-            url: `../earn/${value.key}`,
+            url: `../program/point/earn?type=${value.key}`,
             reward_point: value.reward_points,
             status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
             name: value.name,
@@ -97,7 +97,7 @@ export default function PointProgram() {
         return [
             {
                 id: value.key,
-                url: `../new_reward/${value.key}`,
+                url: `../../reward/new?type=${value.key}`,
                 reward_point: value.reward_points,
                 status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
                 name: value.name,
@@ -126,7 +126,7 @@ export default function PointProgram() {
     return (
         <Page
             title="Points"
-            backAction={{content: "Programs", url: "../programs"}}
+            backAction={{content: "Programs", url: "../../programs"}}
             titleMetadata={<Badge tone="success">Active</Badge>}
             // primaryAction={{content: 'Save'}}
         >
@@ -208,31 +208,31 @@ export default function PointProgram() {
                                     <ResourceList items={[
                                         {
                                             id: '1',
-                                            url: '../new_reward/amount_discount',
+                                            url: '../reward/new?type=amount_discount',
                                             name: 'Amount discount',
                                             icon: CashDollarIcon,
                                         },
                                         {
                                             id: '2',
-                                            url: '../new_reward/percentage_off',
+                                            url: '../reward/new?type=percentage_off',
                                             name: 'Percentage off',
                                             icon: DiscountIcon,
                                         },
                                         {
                                             id: '3',
-                                            url: '../new_reward/free_shipping',
+                                            url: '../reward/new?type=free_shipping',
                                             name: 'Free Shipping',
                                             icon: DeliveryIcon,
                                         },
                                         {
                                             id: '4',
-                                            url: '../new_reward/free_product',
+                                            url: '../reward/new?type=free_product',
                                             name: 'Free Product',
                                             icon: ProductIcon,
                                         },
                                         {
                                             id: '5',
-                                            url: '../new_reward/gift_card',
+                                            url: '../reward/new?type=gift_card',
                                             name: 'Gift Card',
                                             icon: GiftCardIcon,
                                         },
@@ -307,8 +307,6 @@ export default function PointProgram() {
                                         }}
                                     />
                                 )}
-
-
                             </Card>
                         </BlockStack>
                     </Layout.Section>

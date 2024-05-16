@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="@shopify/polaris" level="application" />
     <orderEntry type="library" name="app-bridge" level="application" />
+    <orderEntry type="library" name="app-bridge" level="application" />
   </component>
 </module>

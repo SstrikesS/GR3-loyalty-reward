@@ -5,6 +5,26 @@ export function convertToTitleCase(str) {
         return char.toUpperCase();
     });
 }
+export function convertSnakeString(str) {
+    return str.replace(/_/g, ' ').trim();
+}
+export function isStringInteger(str) {
+    if(/^\d+$/.test(str)){
+        const number = parseInt(str);
+        return number > 0;
+    }
+    return false;
+}
+export function isPositiveFloat(str) {
+    if (/[^0-9.]/.test(str)) {
+        return false;
+    }
+
+    const number = parseFloat(str);
+
+    return !Number.isNaN(number) && number > 0;
+}
+
 export function getTimeZone(date, timezone) {
     return toZonedTime(date, timezone);
 }

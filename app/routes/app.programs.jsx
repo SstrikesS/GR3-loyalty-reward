@@ -23,7 +23,7 @@ export default function Programs() {
                         primaryAction={{
                             content: "Setup",
                             onAction: () => {
-                                navigate('../point_program');
+                                navigate('../program/points');
                             },
                         }}
                         description="Create ways your customers can earn points and use points"

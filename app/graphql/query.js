@@ -46,21 +46,23 @@ export const GET_REDEEM_POINTS = gql`
     query GetRedeemPoints ($input : GetRedeemPointInput) {
         getRedeemPoints(input: $input) {
             id
-            reward_id
+            store_id
             key
-            type
-            name
-            reward_points
-            items {
-                all
-                collection
+            title
+            pointsCost
+            discountValue
+            programApply
+            collections
+            prefixCode
+            combination {
+                order
+                product
+                shipping
             }
-            minimumReq
-            prefix
-            status
-            combination
+            minimumRequire
             start_at
             expire_at
+            status
             createdAt
             updatedAt
         }

@@ -16,3 +16,30 @@ export const UPDATE_EARN_POINT = gql`
         }
     }
 `;
+
+export const CREATE_REDEEM_POINT = gql`
+    mutation CreateRedeemPoint($input: CreateRedeemPointInput) {
+        createRedeemPoint(input: $input) {
+            id
+            store_id
+            key
+            title
+            pointsCost
+            discountValue
+            programApply
+            collections
+            prefixCode
+            combination {
+                order
+                product
+                shipping
+            }
+            minimumRequire
+            start_at
+            expire_at
+            status
+            createdAt
+            updatedAt
+        }
+    }
+`

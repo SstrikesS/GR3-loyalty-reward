@@ -6,6 +6,6 @@
 {% if path == "/frontend/entrypoints/theme.css" or path == "theme.css" %}
   {{ 'theme-4ed993c7.js' | asset_url | split: '?' | first | stylesheet_tag: preload: preload_stylesheet }}
 {% elsif path == "/frontend/entrypoints/theme.jsx" or path == "theme.jsx" %}
-  <script src="{{ 'theme-5107d1dd.js' | asset_url | split: '?' | first }}" type="module" crossorigin="anonymous"></script>
+  <script src="{{ 'theme-489636ba.js' | asset_url | split: '?' | first }}" type="module" crossorigin="anonymous"></script>
   <link rel="modulepreload" href="{{ 'theme-4ed993c7.js' | asset_url | split: '?' | first }}" crossorigin="anonymous">
 {% endif %}
