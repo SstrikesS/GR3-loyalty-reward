@@ -1,6 +1,8 @@
 import { cors } from 'remix-utils/cors'
 import {authenticate} from "../shopify.server";
 import axios from "axios";
+import client from "../graphql/client";
+import {GET_REDEEM_POINTS} from "../graphql/query";
 export async function loader({request}) {
     const data = {
         name: 'thanhnt',
@@ -17,8 +19,17 @@ export async function loader({request}) {
             },
         }
     );
+
+    const res = await client.query({
+        query: GET_REDEEM_POINTS,
+        variables: {
+            input: {
+                id: `${store.data.shop.id}`
+            }
+        }
+    })
     store = store.data.shop
-    const response = {data, store}
+    const response = {res}
 
     return await cors(request,response);
 }

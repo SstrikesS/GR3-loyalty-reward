@@ -1,5 +1,5 @@
 import {Button, Flex, theme} from "antd";
-import {testFetch} from "@/utils/apis";
+// import {testFetch} from "../utils/apis";
 
 export default function LoginPage({shop}) {
 
@@ -11,11 +11,11 @@ export default function LoginPage({shop}) {
         window.location.href = `https://${shop.domain}/account/register`;
     }
 
-    const test = async () => {
-        await testFetch().then(
-            response => {console.log(response)}
-        );
-    }
+    // const test = async () => {
+    //     await testFetch().then(
+    //         response => {console.log(response)}
+    //     );
+    // }
 
     return (
         <Flex gap="middle" vertical>
@@ -37,13 +37,8 @@ export default function LoginPage({shop}) {
                     Already have an account?
                     <a href={`https://${shop.domain}/account/login`} style={{textDecoration: "none"}}> Sign in</a>
                 </p>
-            </div>
-            <div style={{
-                padding: "6px 24px",
-                background: colorBgContainer,
-                borderRadius: borderRadiusLG,
-            }}>
-                <Button type="primary" onClick={test}>Test Api</Button>
+                {/*<Button type="primary" onClick={test}>Test Api</Button>*/}
+                {/*<p>AAAABBBBCCCDDD</p>*/}
             </div>
         </Flex>
     );

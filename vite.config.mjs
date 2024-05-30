@@ -5,7 +5,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
     plugins: [
         shopify({
-            themeRoot: 'extensions/embbed-popup-frontend'
+            themeRoot: 'extensions/embed-popup-frontend',
+            sourceCodeDir: 'frontend',
+            entrypointsDir: 'frontend/entrypoints',
+            snippetFile: 'vite-tag.liquid',
+
         }),
         react(),
     ]

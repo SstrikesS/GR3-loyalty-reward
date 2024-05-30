@@ -22,7 +22,7 @@ const redeemPointSchema = new Schema({
         type: String,
         require: true,
     },
-    store_id: {
+    program_id: {
         type: String,
         require: true,
     },
@@ -34,6 +34,10 @@ const redeemPointSchema = new Schema({
         type: String,
         required: true,
     },
+    icon: {
+        type: String,
+        required: true,
+    },
     pointsCost: {
         type: String,
         required: true,
@@ -41,6 +45,9 @@ const redeemPointSchema = new Schema({
     discountValue: {
         type: String,
         required: true,
+    },
+    isSetShippingRates: {
+        type: Boolean,
     },
     programApply: {
         type: String,
@@ -58,6 +65,10 @@ const redeemPointSchema = new Schema({
     },
     minimumRequire: {
         type: String,
+    },
+    minimumRequireType: {
+        type: String,
+        required: true,
     },
     start_at: {
         type: Date,

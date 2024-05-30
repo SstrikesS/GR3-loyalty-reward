@@ -6,6 +6,7 @@
         "predev": "prisma generate && prisma migrate deploy",
         "dev": "shopify app dev",
         "shopify:dev": "shopify app dev",
+        "shopify:theme": "shopify app dev --theme 137771974846",
         "shopify:extensions": "shopify app generate extension",
         "config:link": "shopify app config link",
         "config:push": "shopify app config push",
@@ -21,7 +22,7 @@
         "setup": "prisma generate && prisma migrate deploy",
         "vite:dev": "vite",
         "vite:build": "vite build",
-        "cleanup": "rimraf --glob extensions/*/assets/*.{json,geetkeep}"
+        "cleanup": "rimraf --glob extensions/*/assets/.vite"
     },
     "dependencies": {
         "@ant-design/icons": "^5.3.7",
@@ -63,7 +64,8 @@
         "react-dom": "^18.2.0",
         "remix-auth": "^3.5.1",
         "remix-utils": "^7.6.0",
-        "ulid": "^2.3.0"
+        "ulid": "^2.3.0",
+        "vite": "^5.2.11"
     },
     "devDependencies": {
         "@remix-run/eslint-config": "^2.0.0",
@@ -72,8 +74,7 @@
         "eslint-config-prettier": "^8.8.0",
         "npm-run-all": "^4.1.5",
         "prettier": "^2.8.8",
-        "vite": "^4.4.4",
-        "vite-plugin-shopify": "^2.1.1"
+        "vite-plugin-shopify": "^3.0.1"
     },
     "workspaces": [
         "web",

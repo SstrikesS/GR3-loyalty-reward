@@ -35,7 +35,6 @@ export default function MainPage({page, setPage}) {
                 borderRadius: borderRadiusLG,
             }}>
                 <Flex gap="small" justify="flex-end" align="center">
-
                     <div style={{
                         width: "15%"
                     }}>
@@ -75,7 +74,7 @@ export default function MainPage({page, setPage}) {
                         width: "75%"
                     }}>
                         <p style={{fontWeight: "bold", fontSize: "15px", textAlign: "center", display: 'flex'}}>
-                            Earn Points
+                            Earn Point
                         </p>
                     </div>
                     <div style={{

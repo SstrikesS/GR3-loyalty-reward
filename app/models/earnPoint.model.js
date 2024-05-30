@@ -7,16 +7,20 @@ const earnPointSchema = new Schema({
         type: String,
         require: true,
     },
+    program_id: {
+        type: String,
+        require: true,
+    },
     key: {
         type: String,
         required: true,
     },
+    sub_key: {
+        type: String,
+    },
     icon: {
         type: String,
         required: true,
-    },
-    type: {
-        type: Number
     },
     link: {
         type: String

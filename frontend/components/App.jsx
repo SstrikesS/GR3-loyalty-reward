@@ -2,10 +2,10 @@ import {useEffect, useState} from "react";
 import {Spinner} from '@shopify/polaris';
 import LoginPage from "~/components/LoginPage";
 import MainPage from "~/components/MainPage";
-import LayoutPage from "@/components/Layout";
-import RewardList from "@/components/RewardList";
-import {RightOutlined} from "@ant-design/icons";
-import {Button} from "antd";
+import LayoutPage from "../components/Layout";
+import RewardList from "../components/RewardList";
+import EarnPoint from "../components/EarnPoint";
+import RedeemPoint from "./RedeemPoint";
 
 export default function App({home}) {
     const modal = document.getElementById("major-popup-parent");
@@ -49,6 +49,8 @@ export default function App({home}) {
     const loginPageComponent = <LoginPage shop={shop}></LoginPage>;
     const mainPageComponent = <MainPage page={page} setPage={setPage}></MainPage>;
     const rewardListComponent = <RewardList page={page} setPage={setPage}></RewardList>;
+    const earnPointComponent = <EarnPoint page={page} setPage={setPage}></EarnPoint>
+    const redeemPointComponent = <RedeemPoint page={page} setPage={setPage}></RedeemPoint>
 
     return (
         <div className="tw-text-5xl tw-text-red-600">
@@ -62,6 +64,12 @@ export default function App({home}) {
                 </div>
                 <div id="reward-list" className={`popup-page ${page === 'reward-list' ? 'active' : ''}`}>
                     <LayoutPage customer={customer} shop={shop} childComponent={rewardListComponent}/>
+                </div>
+                <div id="earn-point" className={`popup-page ${page === 'earn-point' ? 'active' : ''}`}>
+                    <LayoutPage customer={customer} shop={shop} childComponent={earnPointComponent}/>
+                </div>
+                <div id="redeem-point" className={`popup-page ${page === 'redeem-point' ? 'active' : ''}`}>
+                    <LayoutPage customer={customer} shop={shop} childComponent={redeemPointComponent}/>
                 </div>
             </div>
         </div>

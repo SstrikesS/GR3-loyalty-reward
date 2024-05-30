@@ -1,38 +1,40 @@
-import {json, redirect} from "@remix-run/node";
+import {json} from "@remix-run/node";
 import {authenticate} from "../shopify.server";
-import {Form, useFetcher, useLoaderData, useSubmit, useNavigate} from "@remix-run/react";
+import {Form, useActionData, useFetcher, useLoaderData, useNavigate, useSubmit} from "@remix-run/react";
 import {
     Autocomplete,
-    BlockStack, Box, CalloutCard,
-    Card, Checkbox, ContextualSaveBar, DatePicker, Frame,
+    BlockStack,
+    Box,
+    CalloutCard,
+    Card,
+    Checkbox,
+    ContextualSaveBar,
+    DatePicker,
+    Frame,
     Icon,
-    InlineGrid, Layout, List,
+    InlineGrid,
+    Layout,
+    List,
     Page,
     RadioButton,
     Text,
     TextField
 } from "@shopify/polaris";
-import {
-    convertSnakeString,
-    convertToTitleCase,
-    isPositiveFloat,
-    isStringInteger
-} from "../components/helper/helper";
+import {convertSnakeString, convertToTitleCase, isPositiveFloat, isStringInteger} from "../components/helper/helper";
 import {useCallback, useEffect, useState} from "react";
 import {CalendarIcon, SearchIcon} from "@shopify/polaris-icons";
-import {startOfToday} from "date-fns";
+import {parseISO, startOfToday} from "date-fns";
 import client from "../graphql/client";
-import {CREATE_REDEEM_POINT} from "../graphql/mutation";
-import {ulid} from 'ulid'
+import {GET_REDEEM_POINT} from "../graphql/query";
+import {NewRedeemPoint} from "./api.reward.new";
+import {UpdateRedeemPoint} from "./api.reward.edit";
 
 export async function loader({request, params}) {
     const {session, admin} = await authenticate.admin(request);
     const url = new URL(request.url);
-    const key = url.searchParams.get('type');
-
-    if (key) {
-        url.searchParams.set('type', 'amount_discount');
-    }
+    let key = url.searchParams.get('type');
+    const id = params.id;
+    let icon;
 
     const response = await admin.graphql(`
         #graphql
@@ -60,86 +62,115 @@ export async function loader({request, params}) {
             }
         `);
     const responseJson = await response.json();
+    let redeemData = null;
+    if (id && id !== "new") {
+        redeemData = await client.query({
+            query: GET_REDEEM_POINT,
+            variables: {
+                input: {
+                    id: id,
+                    program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]
+                }
+            }
+        })
+        key = redeemData.key;
+    }
+
+    const collections = responseJson.data.collections.edges.map(collectEdge => ({
+        value: collectEdge.node.id.split('gid://shopify/Collection/')[1],
+        cursor: collectEdge.cursor,
+        label: collectEdge.node.title,
+    }));
+
+    switch (key) {
+        case "amount_discount" :
+            icon = 'https://cdn-icons-png.flaticon.com/32/1611/1611179.png';
+            break;
+        case "percentage_off":
+            icon = 'https://cdn-icons-png.flaticon.com/32/879/879757.png';
+            break;
+        case "free_shipping":
+            icon = 'https://cdn-icons-png.flaticon.com/32/709/709790.png';
+            break;
+        default:
+            key = "amount_discount";
+            icon = 'https://cdn-icons-png.flaticon.com/32/1611/1611179.png';
+            break;
+    }
+
+    if (key) {
+        url.searchParams.set('type', 'amount_discount');
+    }
 
     return json({
         session: session,
-        collectsResponse: responseJson.data.collections,
+        collectsResponse: collections,
+        collectionLastCursor: responseJson.data.collections.edges[responseJson.data.collections.edges.length - 1].cursor,
         shop: responseJson.data.shop,
-        key: key ?? 'amount_discount',
+        key: redeemData ? redeemData.data.getRedeemPoint.key : key,
+        icon: redeemData ? redeemData.data.getRedeemPoint.icon : icon,
+        redeemData: redeemData ? redeemData.data.getRedeemPoint : null,
     });
 }
 
 export async function action({request}) {
-
-    const body = await request.json();
-    console.log(body);
-    try {
-        const {data} = await client.mutate({
-            mutation: CREATE_REDEEM_POINT,
-            variables: {
-                input: {
-                    store_id: body.store_id,
-                    id: ulid(),
-                    key: body.key,
-                    title: body.title,
-                    pointsCost: body.pointsCost,
-                    discountValue: body.discountValue,
-                    programApply: body.programApply,
-                    collections: body.collections,
-                    prefixCode: body.prefixCode,
-                    combination: body.combination,
-                    minimumRequire: body.isSetMinimumRequirement === 'no_required' ? undefined : body.minimumRequire,
-                    start_at: body.expiryDate.start,
-                    expire_at: body.isRewardExpiry === 'set_expired' ? body.expiryDate.end : undefined,
-                }
-            }
+    const method = request.method;
+    if (method === "POST") {
+        console.log("New");
+        return await NewRedeemPoint(request);
+    } else if (method === "PUT") {
+        console.log("Update");
+        return await UpdateRedeemPoint(request);
+    } else {
+        json({
+            action: 'failed',
         })
-    } catch (error) {
-        console.error(error);
     }
-
-    return redirect(`../program/points`);
-
 }
 
 export default function NewReward() {
-    const {key, collectsResponse, shop} = useLoaderData();
+    const {key, collectsResponse, shop, redeemData, collectionLastCursor, icon} = useLoaderData();
     const submit = useSubmit();
-    const [lastCursor, setLastCursor] = useState(collectsResponse.edges[collectsResponse.edges.length - 1].cursor);
+    const [lastCursor, setLastCursor] = useState(collectionLastCursor);
     const fetcher = useFetcher();
     const navigate = useNavigate();
+    const actionData = useActionData();
     const [isDataChange, setIsDataChange] = useState(false);
-    const [collectOption, setCollectOption] = useState([]);
+    const [collectOption, setCollectOption] = useState(collectsResponse);
     const [collectionOptions, setCollectionOptions] = useState([]);
-    const [programName, setProgramName] = useState('');
+    const [programName, setProgramName] = useState(redeemData ? redeemData.title : '');
     const [nameError, setNameError] = useState(null);
-    const [pointCost, setPointCost] = useState("500");
+    const [pointCost, setPointCost] = useState(redeemData ? redeemData.pointsCost : "500");
     const [pointCostError, setPointCostError] = useState(null);
-    const [discountValue, setDiscountValue] = useState("5");
+    const [discountValue, setDiscountValue] = useState(redeemData ? redeemData.discountValue : "5");
     const [discountValueError, setDiscountValueError] = useState(null);
-    const [programApply, setProgramApply] = useState('entire_order')
+    const [programApply, setProgramApply] = useState(redeemData ? redeemData.programApply : 'entire_order')
     const [selectedCollection, setSelectedCollection] = useState([]);
     const [inputCollectionValue, setInputCollectionValue] = useState('');
     const [isCollectionLoading, setIsCollectionLoading] = useState(false);
     const [willLoadMoreResults, setWillLoadMoreResults] = useState(true);
-    const [prefixCode, setPrefixCode] = useState("");
-    const [combinationCheckbox, setCombinationCheckbox] = useState({
+    const [isAddPrefixCode, setsIsAddPrefixCode] = useState(redeemData ? !!redeemData.prefixCode : true);
+    const [prefixCode, setPrefixCode] = useState(redeemData ? redeemData.prefixCode ? redeemData.prefixCode : "" : "");
+    const [programStatus, setProgramStatus] = useState(redeemData ? redeemData.status ? 'active' : 'disable' : 'disable');
+    const [isSetShippingRates, setIsSetShippingRates] = useState(redeemData ? redeemData.isSetShippingRates ? redeemData.isSetShippingRates : true : true);
+    const [combinationCheckbox, setCombinationCheckbox] = useState(redeemData ? redeemData.combination : {
         order: false,
         product: false,
         shipping: false,
     });
-    const [minimumRequire, setMinimumRequire] = useState("5");
+    const [minimumRequire, setMinimumRequire] = useState(redeemData ? redeemData.minimumRequire ? redeemData.minimumRequire : "5" : "5");
     const [minimumRequireError, setMinimumRequireError] = useState(null);
-    const [isRewardExpiry, setIsRewardExpiry] = useState("no_expired");
+    const [isRewardExpiry, setIsRewardExpiry] = useState(redeemData ? redeemData.expire_at ? "set_expired" : "no_expired" : "no_expired");
     const [{month, year}, setDate] = useState({month: startOfToday().getMonth(), year: startOfToday().getFullYear()})
-    const [selectedDate, setSelectedDate] = useState({
+    const [selectedDate, setSelectedDate] = useState(redeemData ? {
+        start: parseISO(redeemData.start_at),
+        end: redeemData.end ? parseISO(redeemData.start_at) : parseISO(redeemData.start_at),
+    } : {
         start: startOfToday(),
         end: startOfToday(),
     });
     const [isSubmitting, setIsSubmitting] = useState(false)
-
-    const [isSetMinimumRequirement, setIsSetMinimumRequirement] = useState('no_required');
-
+    const [isSetMinimumRequirement, setIsSetMinimumRequirement] = useState(redeemData ? redeemData.minimumRequireType : 'no_required');
     const updateText = useCallback(
         (value) => {
             setInputCollectionValue(value);
@@ -160,15 +191,7 @@ export default function NewReward() {
 
     const updateSelection = useCallback(
         (selected) => {
-            // const selectedValue = selected.map((selectedItem) => {
-            //     const matchedOption = collectionOptions.find((collectionOptions) => {
-            //         return collectionOptions.value.match(selectedItem);
-            //     });
-            //     return matchedOption && matchedOption.label;
-            // });
-
             setSelectedCollection(selected);
-            // setInputCollectionValue(selectedValue[0] || '');
         },
         [],
     );
@@ -186,21 +209,30 @@ export default function NewReward() {
 
     const handleSubmit = async () => {
         const data = JSON.stringify({
-            store_id: shop.id.split('gid://shopify/Shop/')[1],
+            program_id: shop.id.split('gid://shopify/Shop/')[1],
+            id: redeemData ? redeemData.id ? redeemData.id : undefined : undefined,
             title: programName,
             key: key,
+            icon: icon,
             pointsCost: pointCost,
-            discountValue: discountValue,
+            discountValue: isSetShippingRates ? discountValue : "0",
+            isSetShippingRates: isSetShippingRates,
             programApply: programApply,
             collections: selectedCollection,
-            prefixCode: prefixCode ?? undefined,
+            prefixCode: isAddPrefixCode ? prefixCode : undefined,
+            isAddPrefixCode: isAddPrefixCode,
             combination: combinationCheckbox,
             isSetMinimumRequirement: isSetMinimumRequirement,
-            minimumRequire: minimumRequire,
+            minimumRequire: isRewardExpiry ? minimumRequire : undefined,
             isRewardExpiry: isRewardExpiry,
-            expiryDate: selectedDate
+            expiryDate: selectedDate,
+            status: programStatus,
         });
-        submit(data, {replace: true, method: 'POST', encType: "application/json"})
+        if (redeemData) {
+            submit(data, {replace: true, method: 'PUT', encType: "application/json"})
+        } else {
+            submit(data, {replace: true, method: 'POST', encType: "application/json"})
+        }
     };
 
     const handlePointCostChange = useCallback((value) => {
@@ -211,6 +243,10 @@ export default function NewReward() {
         setDiscountValue(value);
         setIsDataChange(true)
 
+    }, [],);
+    const programStatusHandler = useCallback((_, newValue) => {
+        setProgramStatus(newValue);
+        setIsDataChange(true);
     }, [],);
     const handleMinimumRequireChange = useCallback((value) => {
         setMinimumRequire(value);
@@ -251,12 +287,10 @@ export default function NewReward() {
     const handleLoadMoreResults = useCallback(() => {
         if (willLoadMoreResults && !isCollectionLoading) {
             setIsCollectionLoading(true);
-            console.log(lastCursor);
             fetcher.load(`../../api/collects?limit=25&cursor=${lastCursor}`);
             const interval = setInterval(() => {
                 if (fetcher.state === 'idle' && !fetcher.data) {
-                    console.log(fetcher.data);
-                    console.log('Fetching data...');
+
                 }
             }, 1000)
 
@@ -269,6 +303,12 @@ export default function NewReward() {
         }
     }, [willLoadMoreResults, isCollectionLoading]);
 
+
+    const handleNameChange = useCallback((value) => {
+        setProgramName(value)
+        setIsDataChange(true)
+    }, [],);
+
     const removeFromSelectedCollection = (indexToRemove) => {
         const updatedCollection = [...selectedCollection];
         updatedCollection.splice(indexToRemove, 1);
@@ -276,11 +316,38 @@ export default function NewReward() {
     };
 
     useEffect(() => {
+        if (actionData) {
+            if (actionData.action === 'success') {
+                if(redeemData) {
+                    shopify.toast.show('Updated successfully');
+                    setIsSubmitting(false);
+                } else {
+                    shopify.toast.show('A new redeem way created successfully');
+
+                    setTimeout(() => {
+                        navigate('../program/points');
+                    }, 500)
+                }
+            } else {
+                if(redeemData) {
+                    shopify.toast.show('Failed to update');
+                    setIsSubmitting(false);
+                } else {
+                    shopify.toast.show('Failed to create a new redeem way');
+
+                    setTimeout(() => {
+                        navigate('../program/points');
+                    }, 500)
+                }
+            }
+        }
+    }, [actionData])
+
+
+    useEffect(() => {
         if (!isCollectionLoading)
             if (fetcher.data) {
                 setLastCursor(fetcher.data.collections.edges[fetcher.data.collections.edges.length - 1].cursor);
-                console.log(fetcher.data);
-                console.log("Success");
                 const updatedOptions = fetcher.data.collections.edges.map(collectEdge => ({
                     // value: collectEdge.node.id.split('gid://shopify/Collection/')[1],
                     value: collectEdge.node.id,
@@ -293,25 +360,18 @@ export default function NewReward() {
                 if (!fetcher.data.collections.pageInfo.hasNextPage) {
                     setWillLoadMoreResults(false);
                 }
-                console.log(collectOption)
             }
     }, [isCollectionLoading]);
 
     useEffect(() => {
-        if (collectsResponse.edges.length > 0) {
-            const updatedOptions = collectsResponse.edges.map(collectEdge => ({
-                value: collectEdge.node.id.split('gid://shopify/Collection/')[1],
-                cursor: collectEdge.cursor,
-                label: collectEdge.node.title,
-            }));
-            setCollectOption(updatedOptions);
+        if (collectOption) {
+            setSelectedCollection(redeemData ? redeemData.collections ? redeemData.collections : [] : []);
         }
     }, []);
 
     useEffect(() => {
         setCollectionOptions(collectOption);
     }, [collectOption]);
-
 
     useEffect(() => {
         if (programName.length === 0) {
@@ -334,6 +394,8 @@ export default function NewReward() {
         if (!isPositiveFloat(discountValue)) {
             setDiscountValueError('Discount value must be a number')
 
+        } else if (key === 'percentage_off' && parseFloat(discountValue) > 100) {
+            setDiscountValueError('Value of percentage can not greater than 100')
         } else {
             setDiscountValueError(null);
         }
@@ -357,8 +419,6 @@ export default function NewReward() {
         }
     }, [minimumRequire, isSetMinimumRequirement])
 
-    const handleNameChange = useCallback((value) => setProgramName(value), [],);
-
     return (
         <div style={{
             marginBottom: "20px"
@@ -377,7 +437,6 @@ export default function NewReward() {
                     }}
                     discardAction={{
                         onAction: () => {
-                            console.log('IN');
                             navigate("../program/points");
                         },
                     }}
@@ -429,7 +488,7 @@ export default function NewReward() {
                                                                 value={discountValue}
                                                                 onChange={handleDiscountValueChange}
                                                                 error={discountValueError}
-                                                                suffix="$"
+                                                                suffix={key === "amount_discount" ? "$" : key === "percentage_off" ? "%" : ""}
                                                             >
                                                             </TextField>
                                                         </InlineGrid>
@@ -456,48 +515,77 @@ export default function NewReward() {
                                                             >
                                                             </TextField>
                                                         </InlineGrid>
+                                                    ) : key === "free_shipping" ? (
+                                                        <BlockStack gap="500">
+                                                            <TextField
+                                                                label="Points cost"
+                                                                autoComplete="off"
+                                                                value={pointCost}
+                                                                onChange={handlePointCostChange}
+                                                                type="number"
+                                                                error={pointCostError}
+                                                                suffix="points"
+                                                            >
+                                                            </TextField>
+                                                            <Checkbox
+                                                                label="Exclude shipping rates over a certain amount"
+                                                                checked={isSetShippingRates}
+                                                                onChange={setIsSetShippingRates}
+                                                            >
+                                                            </Checkbox>
+                                                            <TextField
+                                                                disabled={!isSetShippingRates}
+                                                                label="Discount value"
+                                                                labelHidden
+                                                                autoComplete="off"
+                                                                value={discountValue}
+                                                                onChange={handleDiscountValueChange}
+                                                                error={discountValueError}
+                                                                suffix="$"
+                                                            >
+                                                            </TextField>
+                                                        </BlockStack>
                                                     ) : (
                                                         <></>
                                                     ))}
-
                                             </BlockStack>
                                         </Card>
-                                        <Card>
-                                            <BlockStack gap="500">
-                                                <Text variant="headingMd" as="h6">
-                                                    Applies to
-                                                </Text>
-                                                <RadioButton
-                                                    label="Entire order"
-                                                    id='entire_order'
-                                                    onChange={handleProgramApplyChange}
-                                                    checked={programApply === 'entire_order'}
-                                                >
-                                                </RadioButton>
-                                                <RadioButton
-                                                    label="Specific collection"
-                                                    id='specific_collections'
-                                                    onChange={handleProgramApplyChange}
-                                                    checked={programApply === 'specific_collections'}
-                                                >
-                                                </RadioButton>
-                                                {programApply === 'specific_collections' ? (
-                                                    <Autocomplete
-                                                        allowMultiple
-                                                        options={collectionOptions}
-                                                        selected={selectedCollection}
-                                                        textField={textField}
-                                                        onSelect={updateSelection}
-                                                        willLoadMoreResults={willLoadMoreResults}
-                                                        onLoadMoreResults={handleLoadMoreResults}
-                                                        loading={isCollectionLoading}
+                                        {key !== "free_shipping" ? (
+                                            <Card>
+                                                <BlockStack gap="500">
+                                                    <Text variant="headingMd" as="h6">
+                                                        Applies to
+                                                    </Text>
+                                                    <RadioButton
+                                                        label="Entire order"
+                                                        id='entire_order'
+                                                        onChange={handleProgramApplyChange}
+                                                        checked={programApply === 'entire_order'}
                                                     >
-                                                    </Autocomplete>
-                                                ) : null
-                                                }
-                                                <div>
-                                                    {
-                                                        selectedCollection.map((selectedItem, index) => {
+                                                    </RadioButton>
+                                                    <RadioButton
+                                                        label="Specific collection"
+                                                        id='specific_collections'
+                                                        onChange={handleProgramApplyChange}
+                                                        checked={programApply === 'specific_collections'}
+                                                    >
+                                                    </RadioButton>
+                                                    {programApply === 'specific_collections' ? (
+                                                        <Autocomplete
+                                                            allowMultiple
+                                                            options={collectionOptions}
+                                                            selected={selectedCollection}
+                                                            textField={textField}
+                                                            onSelect={updateSelection}
+                                                            willLoadMoreResults={willLoadMoreResults}
+                                                            onLoadMoreResults={handleLoadMoreResults}
+                                                            loading={isCollectionLoading}
+                                                        >
+                                                        </Autocomplete>
+                                                    ) : null
+                                                    }
+                                                    <div>
+                                                        {selectedCollection.map((selectedItem, index) => {
                                                             const matchedOption = collectionOptions.find((collectionOptions) => {
                                                                 return collectionOptions.value.match(selectedItem);
                                                             });
@@ -515,17 +603,27 @@ export default function NewReward() {
                                                                 ></CalloutCard>
                                                             );
                                                         })
-                                                    }
-                                                </div>
-                                            </BlockStack>
-                                        </Card>
+                                                        }
+                                                    </div>
+                                                </BlockStack>
+                                            </Card>
+                                        ) : null
+                                        }
                                         <Card>
                                             <BlockStack gap="500">
                                                 <Text variant="headingMd" as="h6">
                                                     Discount code
                                                 </Text>
-                                                <TextField
+                                                <Checkbox
                                                     label="Add a prefix to discount code"
+                                                    checked={isAddPrefixCode}
+                                                    onChange={setsIsAddPrefixCode}
+                                                >
+                                                </Checkbox>
+                                                <TextField
+                                                    disabled={!isAddPrefixCode}
+                                                    label="Add a prefix to discount code"
+                                                    labelHidden
                                                     autoComplete="off"
                                                     placeholder="Example: freeshipping-, 5%off-,..."
                                                     value={prefixCode}
@@ -666,25 +764,6 @@ export default function NewReward() {
                                                 </div>
                                             </BlockStack>
                                         </Card>
-                                        {/*<Card>*/}
-                                        {/*    <BlockStack gap="500">*/}
-                                        {/*        <Text variant="headingMd" as="h6">*/}
-                                        {/*            Status*/}
-                                        {/*        </Text>*/}
-                                        {/*        <RadioButton*/}
-                                        {/*            label="Active"*/}
-                                        {/*            id="active"*/}
-                                        {/*            onChange={programStatusHandler}*/}
-                                        {/*            checked={programStatus === 'active'}*/}
-                                        {/*        ></RadioButton>*/}
-                                        {/*        <RadioButton*/}
-                                        {/*            label="Disable"*/}
-                                        {/*            id="disable"*/}
-                                        {/*            onChange={programStatusHandler}*/}
-                                        {/*            checked={programStatus === 'disable'}*/}
-                                        {/*        ></RadioButton>*/}
-                                        {/*    </BlockStack>*/}
-                                        {/*</Card>*/}
                                     </BlockStack>
                                 </Form>
                             </Layout.Section>
@@ -695,24 +774,6 @@ export default function NewReward() {
                                             <Text variant="headingMd" as="h6">
                                                 Summary
                                             </Text>
-                                            {/*<Box paddingInlineStart="400">*/}
-                                            {/*    {discountCode.length === 0 ? (*/}
-                                            {/*        <Text variant="bodyMd" as="h6">*/}
-                                            {/*            No prefix discount code set*/}
-                                            {/*        </Text>*/}
-
-                                            {/*    ) : (*/}
-                                            {/*        <InlineStack wrap={false}>*/}
-                                            {/*            <Text variant="headingMd" as="h5" truncate>*/}
-                                            {/*                {prefixCode + discountCode}*/}
-                                            {/*            </Text>*/}
-                                            {/*            <Button size="micro" variant='plain' id="discountCode-button"*/}
-                                            {/*                    icon={ClipboardIcon} onClick={async () => {*/}
-                                            {/*                await navigator.clipboard.writeText(prefixCode + discountCode);*/}
-                                            {/*            }}></Button>*/}
-                                            {/*        </InlineStack>*/}
-                                            {/*    )}*/}
-                                            {/*</Box>*/}
                                             <Text variant="headingMd" as="h6">
                                                 Title
                                             </Text>
@@ -731,9 +792,17 @@ export default function NewReward() {
                                                 Detail
                                             </Text>
                                             <List>
-                                                <List.Item>{parseFloat(discountValue).toFixed(2)}$ off apply
-                                                    to <strong>{programApply === 'specific_collections' ? selectedCollection.length : null} {convertSnakeString(programApply)} </strong>
-                                                </List.Item>
+                                                {key === "discount_value" || key === "percentage_off" ? (
+                                                    <List.Item><strong>{parseFloat(discountValue).toFixed(2)}</strong>{key === "discount_value" ? "$" : key === "percentage_off" ? "%" : ""} off
+                                                        apply
+                                                        to <strong>{programApply === 'specific_collections' ? selectedCollection.length : null} {convertSnakeString(programApply)} </strong>
+                                                    </List.Item>
+                                                ) : key === "free_shipping" ? (
+                                                    <List.Item><strong>Free shipping</strong> off entire
+                                                        order{isSetShippingRates ? `, applies to shipping rates under ${discountValue}$` : null}
+                                                    </List.Item>
+                                                ) : null}
+
                                                 <List.Item>
                                                     {!combinationCheckbox.shipping && !combinationCheckbox.product && !combinationCheckbox.order ?
                                                         'Can’t combine with other discounts' : 'Can combine with'
@@ -756,20 +825,39 @@ export default function NewReward() {
                                                 </List.Item>
                                                 <List.Item>
                                                     Active
-                                                    from <strong>{selectedDate.start === startOfToday() ? 'today' :
+                                                    from <strong>{selectedDate.start.valueOf() === startOfToday().valueOf() ? 'Today' :
                                                     selectedDate.start.toDateString()}</strong> {isRewardExpiry === 'set_expired' && selectedDate.end.getTime() > selectedDate.start.getTime() ? 'until ' : null}
                                                     <strong>{isRewardExpiry === 'set_expired' && selectedDate.end.getTime() > selectedDate.start.getTime() ? selectedDate.end.toDateString() : null}</strong>
                                                 </List.Item>
                                             </List>
                                         </BlockStack>
                                     </Card>
+                                    {redeemData ? (
+                                        <Card>
+                                            <BlockStack gap="500">
+                                                <Text variant="headingMd" as="h6">
+                                                    Status
+                                                </Text>
+                                                <RadioButton
+                                                    label="Active"
+                                                    id="active"
+                                                    onChange={programStatusHandler}
+                                                    checked={programStatus === 'active'}
+                                                ></RadioButton>
+                                                <RadioButton
+                                                    label="Disable"
+                                                    id="disable"
+                                                    onChange={programStatusHandler}
+                                                    checked={programStatus === 'disable'}
+                                                ></RadioButton>
+                                            </BlockStack>
+                                        </Card>
+                                    ) : null}
                                 </BlockStack>
                             </Layout.Section>
                         </Layout>
                     </Page>
-
                 </div>
-
             </Frame>
         </div>
     )

@@ -68,6 +68,7 @@ export default function Programs() {
                         primaryAction={{
                             content: "Setup",
                             onAction: () => {
+                                navigate('../program/vips');
                             },
                         }}
                         description="Offer exclusive rewards for your loyal customers. VIP is a great option to reward your best customers through increasing rewards, statuses, and perks."

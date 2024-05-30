@@ -6,12 +6,15 @@
 </div>
 
 <script>
-    const home = {{ request.path | json }}
-        window.shopifyCustomer = {
-            id: "{{ customer.id }}",
-            name: "{{ customer.name }}",
-            email: "{{ customer.email }}"
-        }
+    const home = `{{ request.path | json }}`
+    const template = `{{ template.name }}`
+    window.template = template;
+
+    window.shopifyCustomer = {
+        id: "{{ customer.id }}",
+        name: "{{ customer.name }}",
+        email: "{{ customer.email }}"
+    }
     window.shop = {
         name: "{{ shop.name }}",
         domain: "{{ shop.domain }}",
@@ -33,7 +36,8 @@
         outline: inherit;
         z-index: 100;
         transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
-        /* background: url("{{ 'crown-image.png' | asset_img_url: '56x56' }}") no-repeat center */
+        /* background: url("
+    {{ 'crown-image.png' | asset_img_url: '56x56' }} ") no-repeat center */
     }
 
     div[id='major-popup-parent'] {

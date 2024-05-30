@@ -7,84 +7,104 @@ import {
 } from "@shopify/polaris";
 
 import {authenticate} from "../shopify.server";
-import axios from "axios";
-import PointModel from "../models/point.model";
+import PointModel from "../models/pointProgram.model";
 import EarnPointModel from "../models/earnPoint.model";
-import {forEach} from "lodash";
+import {de_customer, de_earnPoint, de_pointProgram, de_vipProgram} from "../constants/default_new_store_config";
+import {ulid} from "ulid";
+import VipProgramModel from "../models/vipProgram.model";
+import {startOfToday} from "date-fns";
+import CustomerModel from "../models/customer.model";
 
 export const loader = async ({request}) => {
-    const {session} = await authenticate.admin(request);
-    let store = await axios.get(
-        `https://${session.shop}/admin/api/2024-04/shop.json`,
-        {
-            headers: {
-                "X-Shopify-Access-Token": session.accessToken,
-                "Accept-Encoding": "application/json",
-            },
-        }
-    );
-    store = store.data.shop;
-
-    const StoreID = await PointModel.exists({id: store.id});
-    if (!StoreID) {
-        const earn_point_default = [
-            {
-                id: store.id,
-                key: 'Order',
-                icon: 'https://cdn-icons-png.flaticon.com/32/2435/2435281.png',
-                type: 0,
-                name: 'Complete an order',
-                reward_points: 100,
-                requirement: null,
-                limit: 0,
-                status: true,
-            },
-            {
-                id: store.id,
-                key: 'FB_Share',
-                icon: 'https://cdn-icons-png.flaticon.com/32/1051/1051360.png',
-                name: 'Share on Facebook',
-                link: 'https://',
-                reward_points: 100,
-                requirement: null,
-                limit: 0,
-                status: false,
-            },
-            {
-                id: store.id,
-                key: 'DoB',
-                icon: 'https://cdn-icons-png.flaticon.com/32/6479/6479517.png',
-                name: 'Happy Birthday',
-                reward_points: 100,
-                requirement: null,
-                limit: 0,
-                status: false,
-            },
-            {
-                id: store.id,
-                key: 'SignIn',
-                icon: 'https://cdn-icons-png.flaticon.com/32/10479/10479877.png',
-                name: 'Sign In',
-                reward_points: 100,
-                requirement: null,
-                limit: 0,
-                status: false,
+    const {admin} = await authenticate.admin(request);
+    const response = await admin.graphql(`
+        #graphql
+            query MyQuery {
+              shop {
+                id
+                name
+                url
+                myshopifyDomain
+                plan {
+                  displayName
+                  partnerDevelopment
+                  shopifyPlus
+                }
+              }
             }
-        ];
+    `);
+    const responseJson = await response.json();
+    const store_id = responseJson.data.shop.id.split('gid://shopify/Shop/')[1];
+    const isExist = await PointModel.exists({id: store_id}).lean();
+    if (!isExist) {
+        const earn_point_default = de_earnPoint.map((item, index) => {
+            return {id: ulid(), program_id: store_id, ...item}
+        });
         await PointModel.create({
-            id: store.id,
-            point_currency: {
-                singular: 'point',
-                plural: 'points',
-            },
-            status: true,
-        })
-        forEach(earn_point_default, async (value) => {
-            await EarnPointModel.create(value)
-        })
+            id: store_id,
+            ...de_pointProgram
+        });
+        await VipProgramModel.create({
+            id: store_id,
+            milestone_start: startOfToday().toISOString(),
+            ...de_vipProgram
+        });
+        await EarnPointModel.insertMany(earn_point_default);
+
+        let isNext = true;
+        let node = ''
+        do {
+            let response;
+            if(node && node.length > 0) {
+                response = await admin.graphql(`
+                #query
+                query MyQuery {
+                    customers(first: 10, after: "${node}") {
+                        edges {
+                          node {
+                            id
+                          }
+                        }
+                        pageInfo {
+                          endCursor
+                          hasNextPage
+                        }
+                      }
+                    }
+            `);
+            } else {
+                response = await admin.graphql(`
+                #query
+                query MyQuery {
+                    customers(first: 10) {
+                        edges {
+                          node {
+                            id
+                          }
+                        }
+                        pageInfo {
+                          endCursor
+                          hasNextPage
+                        }
+                      }
+                    }
+            `);
+            }
+            const responseJson = await response.json();
+            if(!responseJson.data.customers.pageInfo.hasNextPage) {
+                isNext = false;
+            } else {
+                node = responseJson.data.customers.pageInfo.endCursor;
+            }
+            const customerData = responseJson.data.customers.edges.map((item) => {
+                return {id: item.node.id.split('gid://shopify/Customer/')[1], program_id: store_id, ...de_customer}
+            })
+
+            await CustomerModel.insertMany(customerData)
+        } while (isNext)
     }
 
-    return json({shop: store});
+    return json({shop: responseJson.data.shop});
 };
 
 const Placeholder = ({height = 'auto', width = 'auto'}) => {
@@ -101,11 +121,6 @@ const Placeholder = ({height = 'auto', width = 'auto'}) => {
 };
 export default function Index() {
     const {shop} = useLoaderData();
-    //
-    // useEffect(() => {
-    //     window.storeData = shop;
-    // }, [shop])
-
 
     return (
         <Card>
