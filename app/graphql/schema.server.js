@@ -7,6 +7,7 @@ export const schema = buildSchema(`
     input GetEarnPointInput {
         program_id: String,
         id: String,
+        key: String,
     }
 
     input GetPointProgramInput {
@@ -67,6 +68,9 @@ export const schema = buildSchema(`
         key: String,
         sub_key: String,
         link: String,
+        limit: Int,
+        limit_reset_loop: String,
+        requirement: String,
         name: String,
         reward_points: Int,
         status: Boolean
@@ -108,7 +112,7 @@ export const schema = buildSchema(`
 
     input GetVipTierInput {
         program_id: String,
-        index: Int,
+        id: String,
     }
 
     input GetCustomerInput {
@@ -118,6 +122,78 @@ export const schema = buildSchema(`
         reverse: Int,
         limit: Int,
         skip: Int,
+    }
+
+    input RewardInput {
+        reward_id: String,
+        program_id: String,
+        reward_type: String,
+    }
+
+    input GetRewardInput {
+        reward_id: String,
+        customer_id: String,
+        program_id: String,
+    }
+
+    input CustomerVipPointsInput {
+        earn_points: String,
+        money_spent: String,
+    }
+
+    input CustomerProgramLimitSchemaInput {
+        program_type: String,
+        used: Int,
+    }
+
+    input UpdateCustomerInput {
+        id: String,
+        program_id: String,
+        points_balance: String,
+        points_earn: String,
+        points_spent: String,
+        referral_count: Int,
+        date_of_birth: Date,
+        vip_tier_index: String,
+        last_used_points: Date,
+        last_earned_points: Date,
+        vip_expiry_date: Date,
+        vip_points: CustomerVipPointsInput,
+        program_limit: CustomerProgramLimitSchemaInput
+        reward: [RewardInput],
+    }
+
+    input MilestoneRewardInput {
+        reward_type: String,
+        points: String,
+        reward_id: String
+    }
+
+    input CreateNewTierInput {
+        program_id :String,
+        id: String,
+        name: String,
+        icon: String,
+        milestone_requirement: String,
+        reward: [MilestoneRewardInput],
+        perks: String,
+        previousTier: String,
+        nextTier: String,
+        status: Boolean
+    }
+
+    input UpdateVipTierInput {
+        program_id :String,
+        id: String,
+        name: String,
+        icon: String,
+        milestone_requirement: String,
+        reward: [MilestoneRewardInput],
+        perks: String,
+        previousTier: String,
+        nextTier: String,
+        count: Int,
+        status: Boolean
     }
 
     type PointCurrencySchema {
@@ -143,8 +219,9 @@ export const schema = buildSchema(`
         name: String,
         reward_points: Int,
         limit: Int,
-        requirement: JSON,
+        requirement: String,
         status: Boolean,
+        limit_reset_loop: String,
         createdAt: Date,
         updatedAt: Date
     }
@@ -193,12 +270,16 @@ export const schema = buildSchema(`
     }
 
     type TierSchema {
-        index: Int,
+        id: String,
         name: String,
         icon: String,
         milestone_requirement: String,
-        reward: [MilestoneRewardSchema]
-        perks: [String],
+        reward: [MilestoneRewardSchema],
+        perks: String,
+        previousTier: String,
+        nextTier: String,
+        count: Int,
+        status: Boolean
     }
 
     type VipProgram {
@@ -215,13 +296,24 @@ export const schema = buildSchema(`
     }
 
     type Reward {
-        id: String,
+        reward_id: String,
         program_id: String,
+        reward_type: String,
     }
 
     type PageInfoSchema {
         hasNextPage: Boolean,
         hasPreviousPage: Boolean
+    }
+
+    type CustomerProgramLimitSchema {
+        program_type: String,
+        used: Int,
+    }
+
+    type CustomerVipPoints {
+        earn_points: String,
+        money_spent: String,
     }
 
     type Customer {
@@ -233,7 +325,12 @@ export const schema = buildSchema(`
         referral_link: String,
         referral_count: Int,
         date_of_birth: Date,
-        vip_tier_index: Int,
+        vip_tier_index: String,
+        last_used_points: Date,
+        last_earned_points: Date,
+        vip_expiry_date: Date,
+        vip_points: CustomerVipPoints,
+        program_limit: [CustomerProgramLimitSchema]
         reward: [Reward],
         createdAt: Date,
         updatedAt: Date
@@ -257,9 +354,17 @@ export const schema = buildSchema(`
         getVipTier(input: GetVipTierInput): TierSchema
 
         getCustomers(input: GetCustomerInput): CustomerList
+        getCustomer(input: GetCustomerInput): Customer
+        getAllCustomers(input: GetCustomerInput): [Customer]
 
         shopGetEarnPoints(input: GetEarnPointInput): [EarnPointSchema]
         shopGetRedeemPoints(input: GetRedeemPointInput): [RedeemPointSchema]
+        shopGetCustomer(input: GetCustomerInput): Customer
+        shopGetRewards(input: GetRewardInput): [Reward]
+        shopGetReward(input: GetRewardInput): Reward
+        shopGetVipProgram(input: GetVipProgramInput): VipProgram
+        shopGetVipTier(input: GetVipTierInput): TierSchema
+        shopGetVipTiers(input: GetVipTierInput): [TierSchema]
     }
 
     type Mutation {
@@ -269,5 +374,10 @@ export const schema = buildSchema(`
 
         updateVipProgram(input: UpdateVipProgramInput): VipProgram
         updatePointProgram(input: UpdatePointProgramInput): PointProgram
+
+        updateCustomer(input: UpdateCustomerInput): Customer
+
+        createNewTier(input: CreateNewTierInput): TierSchema
+        updateVipTier(input: UpdateVipTierInput): TierSchema
     }
 `)

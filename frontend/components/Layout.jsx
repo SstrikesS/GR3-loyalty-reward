@@ -36,12 +36,12 @@ export default function LayoutPage({customer, childComponent, shop}) {
                                 width: "200px",
                                 overflow: 'hidden'
                             }}>
-                                Welcome {customer.name}!
+                                Welcome {customer.displayName}!
                             </p>
                         </div>
                         <div>
                             <p style={{color: '#ffffff', lineHeight: '21px', whiteSpace: 'nowrap'}}>
-                                2500000 Points
+                                {customer.points_balance} Points
                             </p>
                         </div>
                     </Flex>

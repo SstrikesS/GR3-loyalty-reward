@@ -1,7 +1,7 @@
 import {authenticate} from "../shopify.server";
 import {json} from "@remix-run/node";
 import {Form, useActionData, useLoaderData, useNavigate, useSubmit} from "@remix-run/react";
-import {GET_EARN_POINT} from "../graphql/query";
+import {GET_EARN_POINT, GET_VIP_PROGRAM, GET_VIP_TIERS} from "../graphql/query";
 import {
     Badge,
     Card,
@@ -11,11 +11,12 @@ import {
     BlockStack,
     RadioButton,
     Frame,
-    ContextualSaveBar, Layout
+    ContextualSaveBar, Layout, Checkbox, InlineStack, Select, Tooltip
 } from "@shopify/polaris";
 import {useCallback, useEffect, useState} from "react";
 import {UPDATE_EARN_POINT} from "../graphql/mutation";
 import client from "../graphql/client";
+import {isStringInteger} from "../components/helper/helper";
 
 export async function loader({request, params}) {
     const {admin} = await authenticate.admin(request);
@@ -38,26 +39,44 @@ export async function loader({request, params}) {
             }
     `);
     const responseJson = await response.json();
-
-    const earnP = await client.query({
-        query: GET_EARN_POINT,
-        variables: {
-            input: {
-                program_id: `${responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}`,
-                id: id
+    const [earnP, vipP, vipTier] = await Promise.all([
+        client.query({
+            query: GET_EARN_POINT,
+            variables: {
+                input: {
+                    program_id: `${responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}`,
+                    id: id
+                }
             }
-        }
-    })
+        }),
+        client.query({
+            query: GET_VIP_PROGRAM,
+            variables: {
+                input: {
+                    id: `${responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}`,
+                }
+            }
+        }),
+        client.query({
+            query: GET_VIP_TIERS,
+            variables: {
+                input: {
+                    program_id: `${responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}`
+                }
+            }
+        })
+    ])
 
     return json({
         shop: responseJson.data.shop,
-        earnP: earnP.data.getEarnPoint
+        earnP: earnP.data.getEarnPoint,
+        vipTier: vipTier.data.getVipTiers,
+        vipProgram: vipP.data.getVipProgram,
     });
 }
 
 export async function action({request}) {
     const body = await request.json();
-    console.log(body);
     try {
         const response = await client.mutate({
             mutation: UPDATE_EARN_POINT,
@@ -87,7 +106,7 @@ export async function action({request}) {
 }
 
 export default function EarnSingular() {
-    const {shop, earnP} = useLoaderData();
+    const {shop, earnP, vipTier, vipProgram} = useLoaderData();
     const submit = useSubmit();
     const actionData = useActionData();
     const [rewardPoint, setRewardPoint] = useState(0);
@@ -99,20 +118,34 @@ export default function EarnSingular() {
     const [programShareLink, setProgramShareLink] = useState('https://');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDataChange, setIsDataChange] = useState(false);
+    const [isLimitTimesUse, setIsLimitTimesUse] = useState(false);
+    const [limitTimesUse, setLimitTimesUse] = useState("0");
+    const [limitTimesUseError, setLimitTimesUseError] = useState(null);
+    const [limitTimeUnit, setLimitTimeUnit] = useState("day");
+    const [isVipLimit, setIsVipLimit] = useState(false);
+    const [vipLimit, setVipLimit] = useState('include');
+    const [tierLimit, setTierLimit] = useState('');
     const navigate = useNavigate();
     const handleSubmit = async () => {
-        const data = JSON.stringify({
-            program_id: `${shop.id.split('gid://shopify/Shop/')[1]}`,
-            id: earnP.id,
-            name: programName,
-            key: earnP.key,
-            sub_key: programType ?? undefined,
-            link: programShareLink ?? undefined,
-            reward_points: rewardPoint,
-            status: programStatus !== 'disable'
-        });
+        if(!rewardPointError && !nameError && !limitTimesUseError) {
+            const data = JSON.stringify({
+                program_id: `${shop.id.split('gid://shopify/Shop/')[1]}`,
+                id: earnP.id,
+                name: programName,
+                key: earnP.key,
+                sub_key: programType ?? undefined,
+                link: programShareLink ?? undefined,
+                reward_points: rewardPoint,
+                status: programStatus !== 'disable',
+                limit: isLimitTimesUse ? parseInt(limitTimesUse) : -1,
+                requirement: isVipLimit ? `${vipLimit}/${tierLimit}` : undefined,
+                limit_reset_loop: isLimitTimesUse ? limitTimeUnit : undefined,
+            });
 
-        submit(data, {replace: true, method: 'PUT', encType: "application/json"});
+            submit(data, {replace: true, method: 'PUT', encType: "application/json"});
+        } else {
+            shopify.toast.show('Invalid input. Save failed!');
+        }
     }
     const programStatusHandler = useCallback((_, newValue) => {
         setProgramStatus(newValue);
@@ -140,6 +173,47 @@ export default function EarnSingular() {
         setIsDataChange(true);
     }, [],);
 
+    const handleIsLimitTimeUseChange = useCallback((value) => {
+        setIsLimitTimesUse(prevState => !prevState);
+        setIsDataChange(true);
+    }, [])
+
+    const handleLimitTimesUseChange = useCallback((value) => {
+        setLimitTimesUse(value);
+        setIsDataChange(true);
+    }, []);
+
+    const handleLimitTimeUnitChange = useCallback((value) => {
+        setLimitTimeUnit(value);
+        setIsDataChange(true);
+    }, []);
+
+    const handleIsVipLimitChange = useCallback((value) => {
+        setIsVipLimit(prevState => !prevState);
+        setIsDataChange(true);
+    }, []);
+
+    const handleVipLimitChange = useCallback((value, id) => {
+        setVipLimit(id);
+        setIsDataChange(true);
+    }, []);
+
+    const handleTierLimitChange = useCallback((value) => {
+        setTierLimit(value);
+        setIsDataChange(true);
+    }, [])
+
+    useEffect(() => {
+        if(isLimitTimesUse) {
+            if(!isStringInteger(limitTimesUse)) {
+                setLimitTimesUseError('Value must be a number');
+            } else {
+                setLimitTimesUseError(null);
+            }
+        } else {
+            setLimitTimesUseError(null);
+        }
+    }, [isLimitTimesUse, limitTimesUse]);
 
     useEffect(() => {
         if (!Number.isInteger(rewardPoint) || rewardPoint <= 0) {
@@ -167,7 +241,20 @@ export default function EarnSingular() {
         setRewardPoint(earnP.reward_points)
         setProgramName(earnP.name)
         setProgramType(earnP.sub_key ?? null);
-        setProgramShareLink(earnP.link ?? null)
+        setProgramShareLink(earnP.link ?? null);
+        if(earnP.limit !== -1) {
+            setIsLimitTimesUse(true)
+            setLimitTimesUse(`${earnP.limit}`);
+            setLimitTimeUnit(earnP.limit_reset_loop)
+        }
+        if(earnP.requirement !== "") {
+            const requirement = earnP.requirement.split('/');
+            if(!vipProgram.status) {
+                setIsVipLimit(true);
+            }
+            setTierLimit(requirement[1])
+            setVipLimit(requirement[0])
+        }
     }, []);
 
     useEffect(() => {
@@ -184,7 +271,25 @@ export default function EarnSingular() {
                 }, 500)
             }
         }
-    }, [actionData])
+    }, [actionData]);
+
+    const timesLimitUnit = [
+        {label: 'lifetime', value: 'lifetime'},
+        {label: 'day', value: 'day'},
+        {label: 'month', value: 'month'},
+        {label: 'year', value: 'year'},
+    ];
+
+    const tierTierOption = vipTier.map((item) => {
+        return {
+            label: item.name,
+            value: item.id,
+        }
+    });
+    tierTierOption.push({
+        label: 'None',
+        value: ''
+    })
 
     return (
         <div style={{
@@ -281,8 +386,94 @@ export default function EarnSingular() {
                                             <Card>
                                                 <BlockStack gap="500">
                                                     <Text variant="headingMd" as="h6">
-                                                        Customer Requirement
+                                                        Customer Eligibility
                                                     </Text>
+                                                    <Checkbox
+                                                        label="Limit the number of times customer can use this earn program"
+                                                        onChange={handleIsLimitTimeUseChange}
+                                                        checked={isLimitTimesUse}
+                                                    >
+                                                    </Checkbox>
+                                                    {isLimitTimesUse ? (
+                                                    <InlineStack gap="400" wrap={false}>
+                                                        <div style={{
+                                                            width: '80%'
+                                                        }}>
+                                                            <TextField
+                                                                label='Limit time use'
+                                                                labelHidden
+                                                                autoComplete='off'
+                                                                value={limitTimesUse}
+                                                                onChange={handleLimitTimesUseChange}
+                                                                error={limitTimesUseError}
+                                                                type='number'
+                                                                suffix="per"
+                                                            >
+                                                            </TextField>
+                                                        </div>
+                                                        <div style={{
+                                                            width: '20%'
+                                                        }}>
+                                                            <Select
+                                                                label="Unit"
+                                                                labelHidden
+                                                                options={timesLimitUnit}
+                                                                onChange={handleLimitTimeUnitChange}
+                                                                value={limitTimeUnit}
+                                                            >
+                                                            </Select>
+                                                        </div>
+                                                    </InlineStack>
+                                                    ) : null}
+                                                    <Tooltip active content="To enable this setting, please ACTIVE VIP program">
+                                                        <Checkbox
+                                                            label="Limit to customers base on VIP tiers"
+                                                            onChange={handleIsVipLimitChange}
+                                                            checked={isVipLimit}
+                                                            disabled={!vipProgram.status}
+                                                        >
+                                                        </Checkbox>
+                                                    </Tooltip>
+                                                    {isVipLimit ? (
+                                                        <div>
+                                                            <RadioButton
+                                                                label="Include specific VIP tier"
+                                                                id="include"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'include'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'include' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                            <RadioButton
+                                                                label="Exclude specific VIP tier"
+                                                                id="exclude"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'exclude'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'exclude' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                        </div>
+                                                        ) : null}
                                                 </BlockStack>
                                             </Card>
                                             <Card>
@@ -341,8 +532,57 @@ export default function EarnSingular() {
                                             <Card>
                                                 <BlockStack gap="500">
                                                     <Text variant="headingMd" as="h6">
-                                                        Customer eligibility
+                                                        Customer Eligibility
                                                     </Text>
+                                                    <Tooltip active content="To enable this setting, please ACTIVE VIP program">
+                                                        <Checkbox
+                                                            label="Limit to customers base on VIP tiers"
+                                                            onChange={handleIsVipLimitChange}
+                                                            checked={isVipLimit}
+                                                            disabled={!vipProgram.status}
+                                                        >
+                                                        </Checkbox>
+                                                    </Tooltip>
+                                                    {isVipLimit ? (
+                                                        <div>
+                                                            <RadioButton
+                                                                label="Include specific VIP tier"
+                                                                id="include"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'include'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'include' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                            <RadioButton
+                                                                label="Exclude specific VIP tier"
+                                                                id="exclude"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'exclude'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'exclude' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                        </div>
+                                                    ) : null}
                                                 </BlockStack>
                                             </Card>
                                             <Card>
@@ -416,8 +656,94 @@ export default function EarnSingular() {
                                             <Card>
                                                 <BlockStack gap="500">
                                                     <Text variant="headingMd" as="h6">
-                                                        Customer Requirement
+                                                        Customer Eligibility
                                                     </Text>
+                                                    <Checkbox
+                                                        label="Limit the number of times customer can use this earn program"
+                                                        onChange={handleIsLimitTimeUseChange}
+                                                        checked={isLimitTimesUse}
+                                                    >
+                                                    </Checkbox>
+                                                    {isLimitTimesUse ? (
+                                                        <InlineStack gap="400" wrap={false}>
+                                                            <div style={{
+                                                                width: '80%'
+                                                            }}>
+                                                                <TextField
+                                                                    label='Limit time use'
+                                                                    labelHidden
+                                                                    autoComplete='off'
+                                                                    value={limitTimesUse}
+                                                                    onChange={handleLimitTimesUseChange}
+                                                                    error={limitTimesUseError}
+                                                                    type='number'
+                                                                    suffix="per"
+                                                                >
+                                                                </TextField>
+                                                            </div>
+                                                            <div style={{
+                                                                width: '20%'
+                                                            }}>
+                                                                <Select
+                                                                    label="Unit"
+                                                                    labelHidden
+                                                                    options={timesLimitUnit}
+                                                                    onChange={handleLimitTimeUnitChange}
+                                                                    value={limitTimeUnit}
+                                                                >
+                                                                </Select>
+                                                            </div>
+                                                        </InlineStack>
+                                                    ) : null}
+                                                    <Tooltip active content="To enable this setting, please ACTIVE VIP program">
+                                                        <Checkbox
+                                                            label="Limit to customers base on VIP tiers"
+                                                            onChange={handleIsVipLimitChange}
+                                                            checked={isVipLimit}
+                                                            disabled={!vipProgram.status}
+                                                        >
+                                                        </Checkbox>
+                                                    </Tooltip>
+                                                    {isVipLimit ? (
+                                                        <div>
+                                                            <RadioButton
+                                                                label="Include specific VIP tier"
+                                                                id="include"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'include'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'include' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                            <RadioButton
+                                                                label="Exclude specific VIP tier"
+                                                                id="exclude"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'exclude'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'exclude' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                        </div>
+                                                    ) : null}
                                                 </BlockStack>
                                             </Card>
                                             <Card>
@@ -476,8 +802,57 @@ export default function EarnSingular() {
                                             <Card>
                                                 <BlockStack gap="500">
                                                     <Text variant="headingMd" as="h6">
-                                                        Customer Requirement
+                                                        Customer Eligibility
                                                     </Text>
+                                                    <Tooltip active content="To enable this setting, please ACTIVE VIP program">
+                                                        <Checkbox
+                                                            label="Limit to customers base on VIP tiers"
+                                                            onChange={handleIsVipLimitChange}
+                                                            checked={isVipLimit}
+                                                            disabled={!vipProgram.status}
+                                                        >
+                                                        </Checkbox>
+                                                    </Tooltip>
+                                                    {isVipLimit ? (
+                                                        <div>
+                                                            <RadioButton
+                                                                label="Include specific VIP tier"
+                                                                id="include"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'include'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'include' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                            <RadioButton
+                                                                label="Exclude specific VIP tier"
+                                                                id="exclude"
+                                                                onChange={handleVipLimitChange}
+                                                                checked={vipLimit === 'exclude'}
+                                                            >
+                                                            </RadioButton>
+                                                            {
+                                                                vipLimit === 'exclude' ? (
+                                                                    <Select
+                                                                        label='Tier'
+                                                                        labelHidden
+                                                                        options={tierTierOption}
+                                                                        onChange={handleTierLimitChange}
+                                                                        value={tierLimit}
+                                                                    ></Select>
+                                                                ) : null
+                                                            }
+                                                        </div>
+                                                    ) : null}
                                                 </BlockStack>
                                             </Card>
                                             <Card>

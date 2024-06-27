@@ -40,28 +40,28 @@ export default function Programs() {
                         />
                     </MediaCard>
                 </div>
-                <div>
-                    <MediaCard
-                        title="Referral"
-                        primaryAction={{
-                            content: "Setup",
-                            onAction: () => {
-                            },
-                        }}
-                        description="Grow your customer list and instantly increase sales and reward them for referring their friends and encouraging them to try out your brand."
-                    >
-                        <img
-                            alt=""
-                            width="100%"
-                            height="100%"
-                            style={{
-                                objectFit: 'cover',
-                                objectPosition: 'center',
-                            }}
-                            src={publicPath + "/referral_program.jpg"}
-                        />
-                    </MediaCard>
-                </div>
+                {/*<div>*/}
+                {/*    <MediaCard*/}
+                {/*        title="Referral"*/}
+                {/*        primaryAction={{*/}
+                {/*            content: "Setup",*/}
+                {/*            onAction: () => {*/}
+                {/*            },*/}
+                {/*        }}*/}
+                {/*        description="Grow your customer list and instantly increase sales and reward them for referring their friends and encouraging them to try out your brand."*/}
+                {/*    >*/}
+                {/*        <img*/}
+                {/*            alt=""*/}
+                {/*            width="100%"*/}
+                {/*            height="100%"*/}
+                {/*            style={{*/}
+                {/*                objectFit: 'cover',*/}
+                {/*                objectPosition: 'center',*/}
+                {/*            }}*/}
+                {/*            src={publicPath + "/referral_program.jpg"}*/}
+                {/*        />*/}
+                {/*    </MediaCard>*/}
+                {/*</div>*/}
                 <div>
                     <MediaCard
                         title="VIP Tiers"

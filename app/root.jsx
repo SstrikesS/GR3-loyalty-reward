@@ -17,6 +17,7 @@ import {
 export default function App() {
     const httpLink = createHttpLink({
         uri: "http://localhost:4000/graphql",
+        // uri: "https://gr3-loyalty-reward.fly.dev/graphql",
     });
 
     const authLink = setContext((_, {headers}) => {

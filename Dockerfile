@@ -1,14 +1,12 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
-EXPOSE 3000
 WORKDIR /app
 COPY . .
 
-RUN npm install
+RUN npm install --force
 RUN npm run build
 
 # You'll probably want to remove this in production, it's here to make it easier to test things!
-RUN rm prisma/dev.sqlite
-RUN npx prisma migrate dev --name init
-
+EXPOSE 8081
+EXPOSE 4000
 CMD ["npm", "run", "start"]

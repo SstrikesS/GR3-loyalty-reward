@@ -3,7 +3,7 @@
 client_id = "f4cc6a39eccbcc6b3a45010d29c4d559"
 name = "loyalty-customer-reward"
 handle = "loyalty-customer-reward"
-application_url = "https://roads-safely-controls-convenient.trycloudflare.com"
+application_url = "https://divisions-tension-kazakhstan-mp.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,21 +13,21 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customers,read_products,read_shipping,write_discounts"
+scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,write_customers,write_discounts"
 
 [auth]
 redirect_urls = [
-  "https://roads-safely-controls-convenient.trycloudflare.com/auth/callback",
-  "https://roads-safely-controls-convenient.trycloudflare.com/auth/shopify/callback",
-  "https://roads-safely-controls-convenient.trycloudflare.com/api/auth/callback"
+  "https://divisions-tension-kazakhstan-mp.trycloudflare.com/auth/callback",
+  "https://divisions-tension-kazakhstan-mp.trycloudflare.com/auth/shopify/callback",
+  "https://divisions-tension-kazakhstan-mp.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-04"
 
 [app_proxy]
-url = "https://roads-safely-controls-convenient.trycloudflare.com/auth/callback"
-subpath = "frontend"
+url = "https://divisions-tension-kazakhstan-mp.trycloudflare.com/auth/callback"
+subpath = "loyalty-app-api"
 prefix = "apps"
 
 [pos]

@@ -61,15 +61,18 @@ export async function loader({request}) {
         const [pointProgramResponse, earnPointsResponse, redeemPointsResponse] = await Promise.all([
             client.query({
                 query: GET_POINT_PROGRAM,
-                variables: {input: {id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}}
+                variables: {input: {id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}},
+                fetchPolicy: 'no-cache',
             }),
             client.query({
                 query: GET_EARN_POINTS,
-                variables: {input: {program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}}
+                variables: {input: {program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}},
+                fetchPolicy: 'no-cache',
             }),
             client.query({
                 query: GET_REDEEM_POINTS,
-                variables: {input: {program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}}
+                variables: {input: {program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1]}},
+                fetchPolicy: 'no-cache',
             }),
         ]);
 

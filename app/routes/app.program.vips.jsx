@@ -15,12 +15,13 @@ import {useActionData, useLoaderData, useNavigate, useSubmit} from "@remix-run/r
 import {authenticate} from "../shopify.server";
 import client from "../graphql/client";
 import {json} from "@remix-run/node";
-import {GET_VIP_PROGRAM, GET_VIP_TIERS} from "../graphql/query";
+import {GET_ALL_CUSTOMERS, GET_VIP_PROGRAM, GET_VIP_TIERS} from "../graphql/query";
 import {useCallback, useEffect, useState} from "react";
 import {parseISO, startOfToday} from "date-fns";
 import {CalendarIcon} from "@shopify/polaris-icons";
 import {isStringInteger} from "../components/helper/helper";
 import {UPDATE_VIP_PROGRAM} from "../graphql/mutation";
+import {VipProgramUpdateHandler} from "../utils/EventTriggerHandler";
 
 export async function loader({request}) {
     const {admin} = await authenticate.admin(request);
@@ -44,17 +45,27 @@ export async function loader({request}) {
     const responseJson = await response.json();
 
     try {
-        const [vipProgramResponse, vipTierResponse] = await Promise.all([
+        const [vipProgramResponse, vipTierResponse, customer] = await Promise.all([
             client.query({
                 query: GET_VIP_PROGRAM,
                 variables: {
                     input: {
                         id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1],
                     }
-                }
+                },
+                fetchPolicy: 'no-cache'
             }),
             client.query({
                 query: GET_VIP_TIERS,
+                variables: {
+                    input: {
+                        program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1],
+                    }
+                },
+                fetchPolicy: 'no-cache'
+            }),
+            client.query({
+                query: GET_ALL_CUSTOMERS,
                 variables: {
                     input: {
                         program_id: responseJson.data.shop.id.split('gid://shopify/Shop/')[1],
@@ -64,8 +75,9 @@ export async function loader({request}) {
         ]);
         const dataResponse = {
             vipProgram: vipProgramResponse.data.getVipProgram,
-            tier: vipTierResponse.data.getVipTier,
+            tier: vipTierResponse.data.getVipTiers,
         };
+
 
         return json({
             shop: responseJson.data.shop,
@@ -80,6 +92,15 @@ export async function loader({request}) {
 export async function action({request}) {
     const body = await request.json();
     try {
+        const previous = await client.query({
+            query: GET_VIP_PROGRAM,
+            variables: {
+                input: {
+                    id: body.id,
+                }
+            }
+        });
+
         const response = await client.mutate({
             mutation: UPDATE_VIP_PROGRAM,
             variables: {
@@ -95,6 +116,8 @@ export async function action({request}) {
             }
         });
         if (response.data.updateVipProgram) {
+
+            VipProgramUpdateHandler(previous.data.getVipProgram, response.data.updateVipProgram).then((r)=> console.log('Handle Vip Program finished successfully'))
 
             return json({
                 action: 'success'
@@ -121,19 +144,22 @@ export default function VipProgram() {
     const submit = useSubmit();
     const actionData = useActionData();
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [milestoneType, setMilestoneType] = useState(dataResponse.vipProgram.milestone_type ? dataResponse.vipProgram.milestone_type : 'earn_point');
+    const [milestoneType, setMilestoneType] = useState(dataResponse.vipProgram.milestone_type ? dataResponse.vipProgram.milestone_type : 'earn_points');
     const [milestoneLifetime, setMilestoneLifetime] = useState(dataResponse.vipProgram.milestone_period_type ? dataResponse.vipProgram.milestone_period_type : 'infinity');
     const [periodTime, setPeriodTime] = useState(dataResponse.vipProgram.milestone_period_value ? `${dataResponse.vipProgram.milestone_period_value}` : "1");
     const [periodTimeError, setPeriodTimeError] = useState(null);
     const [periodUnit, setPeriodUnit] = useState(dataResponse.vipProgram.milestone_period_unit ? dataResponse.vipProgram.milestone_period_unit : 'year');
-    const [programStatus, setProgramStatus] = useState(dataResponse.vipProgram.status ? 'active' : 'disable');
+    const [programStatus, setProgramStatus] = useState(dataResponse.vipProgram.status ? 'active1' : 'disable1');
     const [isDataChange, setIsDataChange] = useState(false);
-    const [{month, year}, setDate] = useState({month: startOfToday().getMonth(), year: startOfToday().getFullYear()})
+    const [{month, year}, setDate] = useState({
+        month: dataResponse.vipProgram.milestone_start ? parseISO(dataResponse.vipProgram.milestone_start).getMonth() : startOfToday().getMonth(),
+        year: dataResponse.vipProgram.milestone_start ? parseISO(dataResponse.vipProgram.milestone_start).getFullYear() : startOfToday().getFullYear()})
     const [selectedDate, setSelectedDate] = useState({
         start: dataResponse.vipProgram.milestone_start ? parseISO(dataResponse.vipProgram.milestone_start) : startOfToday(),
-        end: startOfToday()
+        end: dataResponse.vipProgram.milestone_start ? parseISO(dataResponse.vipProgram.milestone_start) : startOfToday(),
     });
-    let VipTierData = [];
+    let VipTierData = dataResponse.tier;
+
 
     const periodUnitOptions = [
         {label: 'day(s)', value: 'day'},
@@ -185,7 +211,7 @@ export default function VipProgram() {
             milestone_period_type: milestoneLifetime,
             milestone_period_value: milestoneLifetime === 'period' ? parseInt(periodTime) ?? undefined : undefined,
             milestone_period_unit: milestoneLifetime === 'period' ? periodUnit ?? undefined : undefined,
-            status: programStatus === 'active',
+            status: programStatus === 'active1',
             milestone_start: selectedDate.start.toISOString(),
         });
 
@@ -251,7 +277,7 @@ export default function VipProgram() {
                     <Page
                         title="VIP Program"
                         backAction={{content: "Programs", url: "../programs"}}
-                        titleMetadata={programStatus === 'active' ? <Badge tone="success">Active</Badge> :
+                        titleMetadata={programStatus === 'active1' ? <Badge tone="success">Active</Badge> :
                             <Badge tone="critical">Inactive</Badge>}
                     >
                         <BlockStack gap="600">
@@ -267,7 +293,7 @@ export default function VipProgram() {
                                             value
                                             in your brand</p>
                                         <div>
-                                            <Button size="medium">Add new tier</Button>
+                                            <Button size="medium" onClick={addNewTier}>Add new tier</Button>
                                         </div>
                                     </BlockStack>
                                 </Layout.Section>
@@ -277,14 +303,16 @@ export default function VipProgram() {
                                             VIP TIERS
                                         </Text>
                                         <Divider borderColor="border"/>
-                                        {VipTierData.length > 0 ?
+                                        {VipTierData?.length > 0 ?
                                             <ResourceList items={VipTierData} renderItem={(item) => {
-                                                const {index, name, icon, url, earn_point, money_spent} = item;
-                                                const media = <img src={icon} alt=""/>
+                                                const {id, name, icon, milestone_requirement, count} = item;
+                                                const media = <img style={{
+                                                    width: "32px", height: "32px"
+                                                }} src={icon} alt=""/>;
                                                 return (
                                                     <ResourceItem
-                                                        id={index}
-                                                        url={url}
+                                                        id={id}
+                                                        url={`../program/vip/tier/${id}`}
                                                         media={media}
                                                         accessibilityLabel={`View details for ${name}`}
                                                     >
@@ -296,16 +324,16 @@ export default function VipProgram() {
                                                                 <div style={{
                                                                     width: '80%'
                                                                 }}>
-                                                                    {dataResponse.vipProgram.milestone_earn_points_status ?
-                                                                        `Earn ${earn_point} points to achieve` :
-                                                                        dataResponse.vipProgram.milestone_money_spent_status ?
-                                                                            `Spent ${money_spent} $ to achieve` : null
+                                                                    {dataResponse.vipProgram.milestone_type === 'earn_points' ?
+                                                                        `Earn ${milestone_requirement} points to achieve` :
+                                                                        dataResponse.vipProgram.milestone_type === 'money_spent' ?
+                                                                            `Spent ${milestone_requirement} $ to achieve` : null
                                                                     }
                                                                 </div>
                                                                 <div style={{
                                                                     float: "right",
                                                                     width: '20%'
-                                                                }}>0 customers
+                                                                }}>{count} customers
                                                                 </div>
                                                             </InlineStack>
                                                         </div>
@@ -348,9 +376,9 @@ export default function VipProgram() {
                                                 </Text>
                                                 <RadioButton
                                                     label="Points earn"
-                                                    id="earn_point"
+                                                    id="earn_points"
                                                     onChange={milestoneTypeChangeHandler}
-                                                    checked={milestoneType === 'earn_point'}
+                                                    checked={milestoneType === 'earn_points'}
                                                 >
                                                 </RadioButton>
                                                 <RadioButton
@@ -460,13 +488,13 @@ export default function VipProgram() {
                                                     label="Active"
                                                     id="active1"
                                                     onChange={programStatusHandler}
-                                                    checked={programStatus === 'active'}
+                                                    checked={programStatus === 'active1'}
                                                 ></RadioButton>
                                                 <RadioButton
                                                     label="Disable"
                                                     id="disable1"
                                                     onChange={programStatusHandler}
-                                                    checked={programStatus === 'disable'}
+                                                    checked={programStatus === 'disable1'}
                                                 ></RadioButton>
                                             </BlockStack>
                                         </Card>

@@ -9,6 +9,7 @@
     const home = `{{ request.path | json }}`
     const template = `{{ template.name }}`
     window.template = template;
+    window.page = `{{ page_title }}`
 
     window.shopifyCustomer = {
         id: "{{ customer.id }}",
@@ -36,8 +37,7 @@
         outline: inherit;
         z-index: 100;
         transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
-        /* background: url("
-    {{ 'crown-image.png' | asset_img_url: '56x56' }} ") no-repeat center */
+        background: url(" {{ 'crown-image.png' | asset_img_url: '56x56' }} ") no-repeat center
     }
 
     div[id='major-popup-parent'] {

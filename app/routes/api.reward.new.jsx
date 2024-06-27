@@ -26,7 +26,7 @@ export async function NewRedeemPoint(request) {
                     minimumRequire: body.isSetMinimumRequirement === 'no_required' ? undefined : body.minimumRequire,
                     minimumRequireType: body.isSetMinimumRequirement,
                     start_at: body.expiryDate.start,
-                    expire_at: body.isRewardExpiry === 'set_expired' ? body.expiryDate.end : undefined,
+                    expire_at: body.isRewardExpiry === 'set_expired' ? body.expiryDate.end : body.expiryDate.start,
                 }
             }
         })

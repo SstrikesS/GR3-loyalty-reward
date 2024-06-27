@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "thanhnt-discount-app"
+name = "loyalty-customer-reward"
 client_id = "65ed361e1b30cad533121d30ca794626"
-application_url = "https://agreements-kerry-robert-judge.trycloudflare.com"
+application_url = "https://gr3-loyalty-reward.fly.dev"
 embedded = true
 
 [access_scopes]
@@ -11,13 +11,13 @@ scopes = "read_files,write_files,read_product,read_customers,write_customers,rea
 
 [auth]
 redirect_urls = [
-  "https://agreements-kerry-robert-judge.trycloudflare.com/auth/callback",
-  "https://agreements-kerry-robert-judge.trycloudflare.com/auth/shopify/callback",
-  "https://agreements-kerry-robert-judge.trycloudflare.com/api/auth/callback"
+  "https://gr3-loyalty-reward.fly.dev/auth/callback",
+  "https://gr3-loyalty-reward.fly.dev/auth/shopify/callback",
+  "https://gr3-loyalty-reward.fly.dev/api/auth/callback"
 ]
 
 [webhooks]
-api_version = "2023-07"
+api_version = "2024-01"
 
 [pos]
 embedded = false

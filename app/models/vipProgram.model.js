@@ -15,8 +15,8 @@ const MilestoneRewardSchema = new Schema({
     }
 })
 const tierSchema = new Schema({
-    index: {
-        type: Number,
+    id: {
+        type: String,
         require: true,
     },
     name: {
@@ -29,14 +29,27 @@ const tierSchema = new Schema({
     },
     milestone_requirement: {
         type: String,
+        require: true,
     },
     reward: {
         type: [MilestoneRewardSchema],
-        require: true,
+    },
+    previousTier: {
+        type: String,
+    },
+    nextTier: {
+        type: String,
     },
     perks: { // exclusive perks when achieve
-        type: [String], //
+        type: String, //
     },
+    count: {
+        type: Number,
+    },
+    status: {
+        type: Boolean,
+        require: true,
+    }
 });
 
 const vipProgramSchema = new Schema({

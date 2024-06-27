@@ -160,11 +160,11 @@ export default function NewReward() {
     });
     const [minimumRequire, setMinimumRequire] = useState(redeemData ? redeemData.minimumRequire ? redeemData.minimumRequire : "5" : "5");
     const [minimumRequireError, setMinimumRequireError] = useState(null);
-    const [isRewardExpiry, setIsRewardExpiry] = useState(redeemData ? redeemData.expire_at ? "set_expired" : "no_expired" : "no_expired");
+    const [isRewardExpiry, setIsRewardExpiry] = useState(redeemData ? parseISO(redeemData.expire_at).valueOf() !== parseISO(redeemData.start_at).valueOf() ? "set_expired" : "no_expired" : "no_expired");
     const [{month, year}, setDate] = useState({month: startOfToday().getMonth(), year: startOfToday().getFullYear()})
     const [selectedDate, setSelectedDate] = useState(redeemData ? {
         start: parseISO(redeemData.start_at),
-        end: redeemData.end ? parseISO(redeemData.start_at) : parseISO(redeemData.start_at),
+        end: redeemData.end ? parseISO(redeemData.expire_at) : parseISO(redeemData.start_at),
     } : {
         start: startOfToday(),
         end: startOfToday(),
@@ -334,10 +334,7 @@ export default function NewReward() {
                     setIsSubmitting(false);
                 } else {
                     shopify.toast.show('Failed to create a new redeem way');
-
-                    setTimeout(() => {
-                        navigate('../program/points');
-                    }, 500)
+                    setIsSubmitting(false);
                 }
             }
         }

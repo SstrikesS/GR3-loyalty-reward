@@ -9,7 +9,7 @@ import {authenticate} from "../shopify.server";
 import {useFetcher, useLoaderData} from "@remix-run/react";
 import {json} from "@remix-run/node";
 import client from "../graphql/client";
-import {GET_CUSTOMERS} from "../graphql/query";
+import {GET_CUSTOMERS, GET_VIP_TIERS} from "../graphql/query";
 
 const GLOBAL_QUERY_LIMIT = 8;
 
@@ -48,22 +48,35 @@ export async function loader({request}) {
     const shopResponseJson = await shopResponse.json();
     const shop_id = shopResponseJson.data.shop.id.split('gid://shopify/Shop/')[1];
 
-    const res = await client.query({
-        query: GET_CUSTOMERS,
-        variables: {
-            input: {
-                sort: sort,
-                reverse: reverse,
-                program_id: shop_id,
-                limit: limit,
-                skip: skip,
-            }
-        },
-        fetchPolicy: 'no-cache',
-        errorPolicy: 'all',
-    });
+    const [customerList, vipTier] = await Promise.all([
+        client.query({
+            query: GET_CUSTOMERS,
+            variables: {
+                input: {
+                    sort: sort,
+                    reverse: reverse,
+                    program_id: shop_id,
+                    limit: limit,
+                    skip: skip,
+                }
+            },
+            fetchPolicy: 'no-cache',
+            errorPolicy: 'all',
+        }),
+        client.query({
+            query: GET_VIP_TIERS,
+            variables: {
+                input: {
+                    program_id: shop_id
+                }
+            },
+            fetchPolicy: 'no-cache',
+            errorPolicy: 'all',
+        }),
+    ])
 
-    const query = res.data.getCustomers.customers.map(customer => `id:${customer.id}`).join(' OR ')
+
+    const query = customerList.data.getCustomers.customers.map(customer => `id:${customer.id}`).join(' OR ')
 
     const response = await admin.graphql(`
     #graphql
@@ -89,7 +102,7 @@ export async function loader({request}) {
     `);
     const responseJson = await response.json();
     const shopifyMap = new Map(responseJson.data.customers.edges.map(item => [item.node.id, item.node]));
-    const customerData = res.data.getCustomers.customers.map(item1 => {
+    const customerData = customerList.data.getCustomers.customers.map(item1 => {
         const item2 = shopifyMap.get(`gid://shopify/Customer/${item1.id}`);
         return item2 ? {...item1, ...item2} : item1;
     });
@@ -97,12 +110,13 @@ export async function loader({request}) {
     return json({
         shopDomain: shopResponseJson.data.shop.myshopifyDomain.split('.myshopify.com')[0],
         data: customerData,
-        page_info: res.data.getCustomers.pageInfo
+        page_info: customerList.data.getCustomers.pageInfo,
+        vipTier: vipTier.data.getVipTiers,
     });
 }
 
 export default function CustomerPage() {
-    const {data, page_info, shopDomain} = useLoaderData();
+    const {data, page_info, shopDomain, vipTier} = useLoaderData();
     const fetcher = useFetcher();
     const [customerData, setCustomerData] = useState(data);
     const [pageInfo, setPageInfo] = useState(page_info);
@@ -265,12 +279,12 @@ export default function CustomerPage() {
                                                     </Box>
                                                     <Box width="15%" paddingBlock='200'>
                                                         <Text as="h6" variant="bodyMd" alignment="center">
-                                                            {item.points_earn} Points
-                                                        </Text>
-                                                    </Box>
-                                                    <Box width="15%" paddingBlock='200'>
-                                                        <Text as="h6" variant="bodyMd" alignment="center">
-                                                            {item.points_spent} Points
+                                                            {item.vip_tier_index}
+                                                            {(() => {
+                                                                const tier = vipTier.find(tier => tier.id === item.vip_tier_index);
+
+                                                                return tier ? tier.name : 'No Vip Tier';
+                                                            })()}
                                                         </Text>
                                                     </Box>
                                                 </InlineStack>

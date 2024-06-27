@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
@@ -37,7 +38,10 @@ const earnPointSchema = new Schema({
         type: Number,
     },
     requirement: {
-        type: Schema.Types.Mixed,
+        type: String,
+    },
+    limit_reset_loop: {
+        type: String,
     },
     status: {
         type: Boolean,
