@@ -13,11 +13,8 @@ export default function GraphQLServer() {
         rootValue: resolver,
         graphiql: true,
     }))
-    const port = process.env.PORT || 4000;
-    const host = process.env.HOST || 'localhost';
-    const protocol = process.env.PROTOCOL || 'http';
 
-    app.listen(port, () => {
-        console.log(`Server is running on ${protocol}://${host}:${port}/graphql`);
+    app.listen(4000, () => {
+        console.log(`Server is running on port 4000`);
     });
 }
